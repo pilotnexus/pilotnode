@@ -1,0 +1,10 @@
+*.js.map
+/node_modules/
+/exec/
+*.js
+/src/node_modules/
+/build/
+# dotenv environment variables file
+.env
+/testconfig/
+auth.json

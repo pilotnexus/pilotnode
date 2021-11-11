@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "target": "es2017",
+    "module": "commonjs",
+    "esModuleInterop": true,
+    "allowJs": true,
+    "checkJs": true,
+    "outDir": "./bin",
+    "sourceMap": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "strict": true,
+    //"noImplicitAny": true,
+    //"strictNullChecks": true
+    "plugins": [
+      {
+        "name": "@divyenduz/ts-graphql-plugin"
+      }
+    ],  
+    "baseUrl": ".",  // needed for custom mapping of typing
+    // custom mapping of typing
+    "paths": {
+      "*": ["typings/*"] //generic version
+    },
+    "typeRoots": [ "./node_modules/deepstream.io-client.js/src/client.d.ts" ]
+  },
+  "include": ["src/**/*.ts" ],
+  "exclude": ["node_modules"]
+}

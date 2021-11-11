@@ -1,0 +1,34 @@
+{
+  "$id": "https://pilotnexus.io/pilotnode.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PilotNode Configuration file",
+  "type": "object",
+  "definitions": {
+    "connector": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "type": { "type": "string" },
+        "config": {"type": "object"}
+      }
+    }
+  },
+  "properties": {
+    "nodeid": {
+      "type": "string",
+      "description": "Node Id Unique Identifier"
+    },
+    "connectors": {
+      "type": "array",
+      "description": "Define Connectors",
+      "items": {
+        "ref": "#/definitions/connector"
+      }
+
+    },
+    "values": {
+      "description": "defined values",
+      "type": "object"
+    }
+  }
+}
