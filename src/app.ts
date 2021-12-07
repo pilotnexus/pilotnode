@@ -15,6 +15,7 @@ import { program } from 'commander';
 import * as fse from "fs-extra";
 import service from 'os-service'
 import { checkServerIdentity } from "tls";
+import { NtpTimeSync } from "ntp-time-sync";
 var path = require('path');
 
 process.on('uncaughtException', function (exception) {
@@ -22,6 +23,20 @@ process.on('uncaughtException', function (exception) {
   // if you are on production, maybe you can send the exception details to your
   // email as well ?
 });
+
+program
+  .option('-c, --config <configfile>', 'PilotNode Configuration File', ConfigService.cfgfile)
+  .option('-i, --identity <identityfile>', 'Identity File', ConfigService.identityfile)
+  .option('--auth', 'authenticate with Pilot Cloud')
+  .option('--debug', 'enable debug logging')
+  .command('run', { isDefault: true})
+  .description('Runs PilotNode')
+  .action(async (name, options, command) => {
+    service.run(function () {
+      // Stop request received (i.e. a kill signal on Linux or from the
+      // Service Control Manager on Windows), so let's stop!
+      service.stop(0);
+    });
 
 program
   .command('add')
@@ -36,18 +51,6 @@ program
     process.exit(await Helper.removeService());
   });
 
-program
-  .option('-c, --config <configfile>', 'PilotNode Configuration File', ConfigService.cfgfile)
-  .option('-i, --identity <identityfile>', 'Identity File', ConfigService.identityfile)
-  .option('--auth', 'authenticate with Pilot Cloud')
-  .option('--debug', 'enable debug logging')
-  .command('run')
-  .action(async (name, options, command) => {
-    service.run(function () {
-      // Stop request received (i.e. a kill signal on Linux or from the
-      // Service Control Manager on Windows), so let's stop!
-      service.stop(0);
-    });
 
     //startup code
     try {
@@ -129,14 +132,15 @@ async function startup(options: any) {
 
 async function main(configService: ConfigService, logService: LoggingService) {
   try {
-    const timeSync = require('ntp-time-sync').default.getInstance();
+    const timeSync = NtpTimeSync.getInstance();
     const result = await timeSync.getTime();
     logService.log(LogLevel.info, "Current System Time", new Date());
     logService.log(LogLevel.info, "Real Time", result.now);
     logService.log(LogLevel.info, "offset in milliseconds", result.offset);
   }
-  catch {
+  catch(e) {
     logService.log(LogLevel.error, "Cannot get time from NTP server");
+    logService.log(LogLevel.error, e);
   }
 
   // create connector service
