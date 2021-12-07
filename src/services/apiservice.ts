@@ -1,17 +1,17 @@
 import { injectable, inject } from "inversify";
 import { AuthService } from "./authservice";
 import { ConfigService } from "./configservice";
-//import ApolloClient, { gql, InMemoryCache } from 'apollo-boost'
 import { ApolloClient, NormalizedCacheObject, InMemoryCache, split, HttpLink, useSubscription } from '@apollo/client';
+import { WebSocketLink } from '@apollo/client/link/ws'
 import { getMainDefinition } from '@apollo/client/utilities';
-import { WebSocketLink } from '@apollo/client/link/ws';
-import { SubscriptionServer } from 'subscriptions-transport-ws';
+import { SubscriptionClient } from 'subscriptions-transport-ws';
 import jwt_decode from 'jwt-decode'
 import { SbcService } from "./sbcservice";
 import { v4 as uuid_v4 } from 'uuid';
 import { LoggingService, LogLevel } from "./loggingservice";
 import { gql } from "apollo-server-express";
 import { RpcService } from "./rpcservice";
+import ws from 'ws';
 
 interface IActivity {
   id: number;
@@ -41,7 +41,7 @@ export class ApiService {
   /// - false: use authorization
   async init(unauthorized: Boolean): Promise<ApolloClient<NormalizedCacheObject> | null> {
     let that = this;
-    if (that.client === null && !unauthorized) { //TODO: for now don't connect at all when unauthorized (there is not much we can read as an unauthorized user)
+    if (that.client === null) { //TODO: for now don't connect at all when unauthorized (there is not much we can read as an unauthorized user)
       that.log.log(LogLevel.info, `Connecting to ${that.configService.config.graphqlurl} in unauthorized mode`);
       try {
         const cache = new InMemoryCache();
@@ -51,13 +51,12 @@ export class ApiService {
           uri: that.configService.config.graphqlurl,
           fetch: this.auth.axiosfetch.bind(that.auth)
         });
-        const wsLink = new WebSocketLink({
-          uri: that.configService.config.graphqlwsurl,
-          options: {
+        const wsLink = new WebSocketLink(
+          new SubscriptionClient(that.configService.config.graphqlwsurl,
+          {
             reconnect: true,
             connectionParams: () => ({ headers }),
-          }
-        });
+          }, ws));
 
         // The split function takes three parameters:
         //
@@ -82,8 +81,9 @@ export class ApiService {
           that.authenticated = true;
         }
       }
-      catch (e) {
-        that.log.log(LogLevel.error, `Cannot connect to API: ${JSON.stringify(e)}`);
+      catch (e: any) {
+        that.log.log(LogLevel.error, "Cannot connect to API");
+        that.log.log(LogLevel.error, e);
       }
     }
 

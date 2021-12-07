@@ -22,6 +22,10 @@ const moment = require("moment");
 const red = require("node-red");
 const express = require("express");
 const { ApolloServer } = require("apollo-server-express");
+import { ConnectionContext, SubscriptionServer } from 'subscriptions-transport-ws';
+import {
+  ApolloServerPluginLandingPageGraphQLPlayground
+} from "apollo-server-core";
 import { createServer } from "http";
 import { PilotNodeGraphQLSchema } from "./schema";
 import { RpcService } from "../../services/rpcservice";
@@ -35,6 +39,7 @@ class ServerConfig {
   url: string = "http://localhost";
   ws: string = "ws://localhost";
   endpoint: string = "/graphql";
+  playground: Boolean = false;
   port: number = 9000;
   apps: ServeApp[] = [];
 
@@ -112,12 +117,23 @@ export class ServerConnector implements IConnector {
   async startServer(schema: GraphQLSchema) {
     let that = this;
 
+
+    let plugins = [];
+
+    if (that.serverconfig.playground) {
+      plugins.push(ApolloServerPluginLandingPageGraphQLPlayground());
+    }
+
     const url = `${that.serverconfig.url}:${that.serverconfig.port}${that.serverconfig.endpoint}`;
+    
+    // Required logic for integrating with Express
+
+    const app = express();
+    const server = createServer(app);
+
     const apollo = new ApolloServer({
       schema,
-      playground: {
-        endpoint: url,
-      },
+      plugins,
       subscriptions: {
         onConnect: (connectionParams: any, webSocket: any, context: any) => {
           // ...
@@ -127,12 +143,35 @@ export class ServerConnector implements IConnector {
         },
       }
     });
-    
-    // Required logic for integrating with Express
-    await apollo.start();
 
-    const app = express();
+    const subscriptionServer = SubscriptionServer.create({
+      // This is the `schema` we just created.
+      schema,
+      // These are imported from `graphql`.
+      execute,
+      subscribe,
+      // Providing `onConnect` is the `SubscriptionServer` equivalent to the
+      // `context` function in `ApolloServer`. Please [see the docs](https://github.com/apollographql/subscriptions-transport-ws#constructoroptions-socketoptions--socketserver)
+      // for more information on this hook.
+      async onConnect(
+        connectionParams: Object,
+        webSocket: WebSocket,
+        context: ConnectionContext
+      ) {
+        // If an object is returned here, it will be passed as the `context`
+        // argument to your subscription resolvers.
+      }
+    }, {
+      // This is the `httpServer` we created in a previous step.
+      server,
+      // This `server` is the instance returned from `new ApolloServer`.
+      path: apollo.graphqlPath,
+    });
+
+
+    await apollo.start();
     apollo.applyMiddleware({ app });
+
 
     //node red
     if (that.serverconfig.ruleengine) {
@@ -140,9 +179,6 @@ export class ServerConnector implements IConnector {
       app.use(that.serverconfig.ruleengine.httpAdminRoot, red.httpAdmin)
       app.use(that.serverconfig.ruleengine.httpNodeRoot, red.httpNode)
     }
-
-    const server = createServer(app);
-    //apollo.installSubscriptionHandlers(server); //TODO
 
     for (let appspec of this.serverconfig.apps) {
       let appPath = path.resolve(appspec.path);
