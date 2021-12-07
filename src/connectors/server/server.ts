@@ -112,8 +112,6 @@ export class ServerConnector implements IConnector {
   async startServer(schema: GraphQLSchema) {
     let that = this;
 
-    const app = express();
-
     const url = `${that.serverconfig.url}:${that.serverconfig.port}${that.serverconfig.endpoint}`;
     const apollo = new ApolloServer({
       schema,
@@ -129,7 +127,11 @@ export class ServerConnector implements IConnector {
         },
       }
     });
+    
+    // Required logic for integrating with Express
+    await apollo.start();
 
+    const app = express();
     apollo.applyMiddleware({ app });
 
     //node red
@@ -140,7 +142,7 @@ export class ServerConnector implements IConnector {
     }
 
     const server = createServer(app);
-    apollo.installSubscriptionHandlers(server);
+    //apollo.installSubscriptionHandlers(server); //TODO
 
     for (let appspec of this.serverconfig.apps) {
       let appPath = path.resolve(appspec.path);

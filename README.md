@@ -3,18 +3,31 @@
 ## Installation
 
 First make sure that you don't have an old node version installed.
-Node v14.15.0 is required. I recommend using nvm for node version management.
+Node v16.13.0 is required. using n for node version management is recommended.
+(nvm can also be used, you need to make sure however that you install the same node version for all users, e.g. pi and root)
 
-
-### 1. Install nvm
-
+### Uninstall nodejs
 ```
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash
+sudo apt-get purge --auto-remove nodejs
+```
+
+### 1. Install n
+```
+# make cache folder (if missing) and take ownership
+sudo mkdir -p /usr/local/n
+sudo chown -R $(whoami) /usr/local/n
+# make sure the required folders exist (safe to execute even if they already exist)
+sudo mkdir -p /usr/local/bin /usr/local/lib /usr/local/include /usr/local/share
+# take ownership of Node.js install destination folders
+sudo chown -R $(whoami) /usr/local/bin /usr/local/lib /usr/local/include /usr/local/share
+
+curl -L https://raw.githubusercontent.com/tj/n/master/bin/n -o n
+bash n lts
 ```
 
 ### 2. Install node
 ```
-nvm install 14.15.4
+nvm install 16.13.1
 sudo ln -s "$NVM_DIR/versions/node/$(nvm version)/bin/npm" "/usr/local/bin/npm"
 sudo ln -s "$NVM_DIR/versions/node/$(nvm version)/bin/node" "/usr/local/bin/node"
 ```

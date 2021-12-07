@@ -27,7 +27,6 @@
       "sourceMaps": true,
       "smartStep": true,
       "internalConsoleOptions": "openOnSessionStart",
-      "trace": "sm",
       "outDir": "${workspaceRoot}/bin"
     },
     {
@@ -46,12 +45,12 @@
     },
     {
       "type": "node",
-      "runtimeVersion": "14.15.0", 
+      //"runtimeVersion": "14.15.0", 
       "request": "launch",
       "name": "Debug TypeScript in Node.js",
       "preLaunchTask": "typescript",
       "program": "${workspaceFolder}/src/app.ts",
-      "args": ["-d", "${workspaceFolder}/testconfig/"],
+      //"args": ["-d", "${workspaceFolder}/testconfig/"],
       "cwd": "${workspaceFolder}",
       "protocol": "inspector",
       "outFiles": [

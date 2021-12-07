@@ -1,10 +1,9 @@
 import { injectable, inject } from "inversify";
 const qrcode = require("qrcode-terminal");
-const { red, green, bold, underline, italic } = require("chalk");
+import chalk from "chalk";
 import { Issuer, Client, TokenSet, TokenSetParameters } from "openid-client";
-import axios, { AxiosRequestConfig, AxiosPromise } from "axios";
+import axios, { AxiosRequestConfig, AxiosPromise, AxiosRequestHeaders } from "axios";
 import { ConfigService } from "./configservice";
-const { Response, Headers } = require("node-fetch");
 
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 const { log, error } = console;
@@ -12,7 +11,6 @@ const grant_type = "urn:ietf:params:oauth:grant-type:device_code";
 const {
   ISSUER = "https://amescon.eu.auth0.com/.well-known/openid-configuration",
   CLIENT_ID = "hG0Kh6oMY6A2dMUjyjAbTQPTcd8syl58",
-  //SCOPE = "openid email offline_access node:7b12e113-2f32-4c37-8c64-fc27bba95963"
   SCOPE = "openid email offline_access"
 } = process.env;
 
@@ -68,8 +66,9 @@ export class AuthService {
     return "";
   }
 
-  public axiosfetch(axios: any, transformer: any) {
-    return axiosFetcher(this, axios, transformer);
+  public axiosfetch(input: RequestInfo, init?: RequestInit | undefined) {
+  
+    return axiosFetcher(this, input.toString(), init);
   }
 
   /*
@@ -97,7 +96,7 @@ export class AuthService {
       let request1 = {
         client_id: CLIENT_ID,
         scope: SCOPE,
-        node_id: "7b12e113-2f32-4c37-8c64-fc27bba95963",
+        node_id: "7b12e113-2f32-4c37-8c64-fc27bba95963", //TODO
         prompt: ""
       };
 
@@ -119,10 +118,10 @@ export class AuthService {
       //log(response);
       //log("\n\n");
 
-      log(`Open ${bold(response.verification_uri)} and enter`);
+      log(`Open ${chalk.bold(response.verification_uri)} and enter`);
       log("\n\n");
       log(
-        `=======>       ${bold(
+        `=======>       ${chalk.bold(
           response.user_code.split("").join(" ")
         )}       <=======`
       );
@@ -131,7 +130,7 @@ export class AuthService {
       );
       qrcode.generate(response.verification_uri_complete, { small: true });
       log(
-        italic("note: this code expires in %d minutes"),
+        chalk.italic("note: this code expires in %d minutes"),
         response.expires_in / 60
       );
 
@@ -157,19 +156,19 @@ export class AuthService {
                 return wait(5000);
                 break;
               case "access_denied":
-                log(red(bold(italic("End-User cancelled the flow"))));
+                log(chalk.red(chalk.bold(chalk.italic("End-User cancelled the flow"))));
                 done = true;
                 break;
               case "expired_token":
-                log(red(bold(italic("The flow has expired"))));
+                log(chalk.red(chalk.bold(chalk.italic("The flow has expired"))));
                 done = true;
                 break;
               default:
                 if (err.name === "OpenIdConnectError") {
                   log(
-                    red(
-                      bold(
-                        italic(
+                    chalk.red(
+                      chalk.bold(
+                        chalk.italic(
                           `error = ${err.error}; error_description = ${err.error_description}`
                         )
                       )
@@ -184,7 +183,7 @@ export class AuthService {
       }
 
       if (tokenset) {
-        log(green(bold("\n\nYour device was sucessfully authorized.")));
+        log(chalk.green(chalk.bold("\n\nYour device was sucessfully authorized.")));
         that.config.tokenSet = new TokenSet(tokenset as TokenSetParameters);
         that.config.saveTokenset();
         return that;
@@ -200,12 +199,13 @@ export class AuthService {
 
 async function axiosFetcher(auth: AuthService, url: string, input: any) {
   // Convert the `fetch` style arguments into a Axios style config
+  let axios_headers: AxiosRequestHeaders = input.headers ? input.headers : {};
 
   const config: AxiosRequestConfig = {
     url,
     method: input.method || "GET",
     data: String(input.body),
-    headers: input.headers,
+    headers: axios_headers,
     validateStatus: () => true
   };
 
@@ -214,7 +214,9 @@ async function axiosFetcher(auth: AuthService, url: string, input: any) {
     throw Error(`ERROR, access-token could not be aquired, token is ${authHeader}`);
   }
 
-  config.headers["Authorization"] = authHeader; 
+  if (config.headers) {
+    config.headers["Authorization"] = authHeader; 
+  }
 
   const result = await axios(config);
 

@@ -3,7 +3,6 @@ import { ConnectorConfig, ValueGroup, SubValue, ValueProperties, IConnectorBaseC
 import { ConfigService } from "./configservice";
 import { ConnectorService } from "./connectorservice";
 import { validate, validateOrReject, ValidationError } from 'class-validator';
-import { string } from "yargs";
 import { LoggingService, LogLevel } from "./loggingservice";
 
 

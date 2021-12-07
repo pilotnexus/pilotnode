@@ -21,8 +21,8 @@
     // custom mapping of typing
     "paths": {
       "*": ["typings/*"] //generic version
-    },
-    "typeRoots": [ "./node_modules/deepstream.io-client.js/src/client.d.ts" ]
+    }//,
+    //"typeRoots": [ "./node_modules/deepstream.io-client.js/src/client.d.ts" ]
   },
   "include": ["src/**/*.ts" ],
   "exclude": ["node_modules"]

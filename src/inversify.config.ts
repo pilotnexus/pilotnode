@@ -9,6 +9,7 @@ import { RuleEngineFactory } from './connectors/rule/rule';
 import { TelemetryConnectorFactory } from './connectors/telemetry/telemetry';
 import { ServerConnectorFactory } from './connectors/server/server';
 import { RosConnectorFactory } from './connectors/ros/ros';
+import { MqttConnectorFactory } from './connectors/mqtt/mqtt';
 
 
 enum NAMED_OBJECTS {
@@ -26,5 +27,6 @@ globalContainer.bind<IConnectorFactory>(NAMED_OBJECTS.CONNECTOR).to(RuleEngineFa
 globalContainer.bind<IConnectorFactory>(NAMED_OBJECTS.CONNECTOR).to(TelemetryConnectorFactory);
 globalContainer.bind<IConnectorFactory>(NAMED_OBJECTS.CONNECTOR).to(ServerConnectorFactory);
 globalContainer.bind<IConnectorFactory>(NAMED_OBJECTS.CONNECTOR).to(RosConnectorFactory);
+globalContainer.bind<IConnectorFactory>(NAMED_OBJECTS.CONNECTOR).to(MqttConnectorFactory);
 
 export { globalContainer, NAMED_OBJECTS };

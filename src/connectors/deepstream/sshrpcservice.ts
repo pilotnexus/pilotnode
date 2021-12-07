@@ -120,7 +120,7 @@ export class SshRpcService {
         let stdin = Buffer.from(data.data);
         session.stream.write(stdin);
       }
-      catch(e) {
+      catch(e: any) {
         response.error(e);
       }
       response.send('');
@@ -197,7 +197,7 @@ export class SshRpcService {
     });
 
   }
-  catch(e) {
+  catch(e: any) {
     if (e instanceof Error) {
       response.send({error: (e as Error).message});
     } else {

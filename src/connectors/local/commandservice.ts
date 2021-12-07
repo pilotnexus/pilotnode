@@ -32,7 +32,7 @@ export class CommandService {
       });
 
       that.terminationFunctions.push(() => {
-        task.destroy();
+        task.stop();
       });
     } else {
       console.log(

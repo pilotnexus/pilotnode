@@ -213,7 +213,7 @@ export class ConfigService {
 
   static async fileLoader(filename: string): Promise<any> {
     if (filename.endsWith('.yml') || filename.endsWith('.yaml')) {
-      return yaml.safeLoad(await fse.readFile(filename, "utf8"))
+      return yaml.load(await fse.readFile(filename, "utf8"))
     } else if (filename.endsWith('.json')) {
       return JSON.parse(await fse.readFile(filename, "utf8"));
     } else {
@@ -224,7 +224,7 @@ export class ConfigService {
   static async fileWriter(filename: string, content: any): Promise<void> {
     let stringContent: string | undefined = undefined;
     if (filename.endsWith('.yml') || filename.endsWith('.yaml')) {
-      stringContent = yaml.safeDump(content);
+      stringContent = yaml.dump(content);
     } else if (filename.endsWith('.json')) {
       stringContent = JSON.stringify(content);
     } else {
@@ -295,7 +295,7 @@ export class ConfigService {
   async saveConfig(): Promise<boolean> {
     let that = this;
     try {
-      await fse.writeFile(ConfigService.cfgfile, yaml.safeDump(that.config));
+      await fse.writeFile(ConfigService.cfgfile, yaml.dump(that.config));
       return true;
     } catch (e) {
       console.log(e);

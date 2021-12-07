@@ -29,8 +29,8 @@ export class WatchService {
       }
     }
     catch (e) {
-      console.log('Error creating Watcher');
-      console.log(e)
+      that.log.log(LogLevel.error, 'Error creating Watcher');
+      that.log.log(LogLevel.error, e);
     }
 
     return w;
@@ -43,8 +43,8 @@ export class WatchService {
       valueGroup.values[SubValue.targetValue].setValue(value, "__local.WatchService");
       valueGroup.values[SubValue.actualValue].setValue(value, "__local.WatchService");
     } catch (e) {
-      console.log('error while reading watched file')
-      console.log(e)
+      that.log.log(LogLevel.error, 'error while reading watched file')
+      that.log.log(LogLevel.error, e)
     }
   }
 
@@ -59,8 +59,8 @@ export class WatchService {
       });
     }
     catch (e) {
-      console.log('error while reading watched file')
-      console.log(e)
+      that.log.log(LogLevel.error, 'error while reading watched file')
+      that.log.log(LogLevel.error, e)
     }
   }
 
@@ -77,7 +77,6 @@ export class WatchService {
           let value = readResult.buffer.toString('ascii', 0, readResult.bytesRead);
           valueGroup.values[SubValue.targetValue].setValue(value, "__local.WatchService");
           valueGroup.values[SubValue.actualValue].setValue(value, "__local.WatchService");
-          //console.log(buffer.toString('ascii', 0, bytesread));
         });
         //await fse.write(valuefd, "S");
         await fse.read(valuefd, w.data, 0, 10, 0);
@@ -89,8 +88,8 @@ export class WatchService {
           });
       }
       catch (e) {
-        console.log('error while reading watched file')
-        console.log(e)
+        that.log.log(LogLevel.error, 'error while reading watched file')
+        that.log.log(LogLevel.error, e)
       }
   }
 }
