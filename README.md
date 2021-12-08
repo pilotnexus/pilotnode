@@ -1,17 +1,29 @@
 ﻿# PilotNode
 
-## Installation
+## Prerequisites
+
+You need Node v16.13.0 or higher installed on your system.
 
 First make sure that you don't have an old node version installed.
-Node v16.13.0 is required. using n for node version management is recommended.
+Using n for node version management is recommended.
 (nvm can also be used, you need to make sure however that you install the same node version for all users, e.g. pi and root)
 
-### Uninstall nodejs
+### Uninstall old versions of nodejs
+Check if you have node installed:
+```
+node --version
+sudo node --version
+```
+If you get a node version returned on either of these calls, you need to remove it, otherwise you can proceed with the next step "Install n"
+
+It depends on how you have installed node how the removal process works. If you installed it via apt-get you can purge it like this:
+
 ```
 sudo apt-get purge --auto-remove nodejs
 ```
+Run `node --version` again to make sure that node is removed (you should get a `command not found` error if you sucessfully removed node)
 
-### 1. Install n
+### Install n
 ```
 # make cache folder (if missing) and take ownership
 sudo mkdir -p /usr/local/n
@@ -22,17 +34,14 @@ sudo mkdir -p /usr/local/bin /usr/local/lib /usr/local/include /usr/local/share
 sudo chown -R $(whoami) /usr/local/bin /usr/local/lib /usr/local/include /usr/local/share
 
 curl -L https://raw.githubusercontent.com/tj/n/master/bin/n -o n
-bash n lts
 ```
 
-### 2. Install node
+### Install node
 ```
-nvm install 16.13.1
-sudo ln -s "$NVM_DIR/versions/node/$(nvm version)/bin/npm" "/usr/local/bin/npm"
-sudo ln -s "$NVM_DIR/versions/node/$(nvm version)/bin/node" "/usr/local/bin/node"
+bash n 16.13.1
 ```
 
-### Install Pilotnode
+## Install Pilotnode
 ```
 npm install -g pilotnode
 ```
@@ -45,54 +54,29 @@ npm remove -g pilotnode
 
 ### Register as service
 ```
-sudo pilotnode install
+sudo pilotnode install-service
 ```
 
-start service:
+start PilotNode service:
 ```
-sudo systemctl start pilotnode
-```
-
-check if service is running:
-```
-sudo systemctl status pilotnode
+sudo service pilotnode start
 ```
 
-## Remote debugging
-
-Run gulp task copyremote with --host [IP]
+check if PilotNode service is running:
 ```
-node --inspect-brk=0.0.0.0:9229 lib/app.js 
-```
-on the raspberry pi
-
-Then attach to remote in vs code
-
-## config
-contains the configuration file for PilotNode (pilotnode.yml) in json format.
-This information is updated by pilotnode
-
-## fwconfig
-contains all informations regarding firmware configuration. This information is updated by pilot-config.
-
-```
-{
-    modules []
-    plc: {
-        config
-        variables
-    }
-}
+sudo service pilotnode status
 ```
 
-### properties
-#### modules
-Contains all information about modules
+### Remove PilotNode service
 
-#### plc
-contains plc information
-##### Properties
-###### config
-the plc configuration file passed to pilot-config build
-###### variables
-the plc variables
+If you want to remove the PilotNode service, you need to stop it first:
+
+```
+sudo service pilotnode stop
+```
+
+then you can remove the service:
+
+```
+sudo pilotnode remove-service
+```

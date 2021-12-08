@@ -25,11 +25,11 @@ process.on('uncaughtException', function (exception) {
 });
 
 program
+  .command('run', { isDefault: true})
   .option('-c, --config <configfile>', 'PilotNode Configuration File', ConfigService.cfgfile)
   .option('-i, --identity <identityfile>', 'Identity File', ConfigService.identityfile)
   .option('--auth', 'authenticate with Pilot Cloud')
   .option('--debug', 'enable debug logging')
-  .command('run', { isDefault: true})
   .description('Runs PilotNode')
   .action(async (name, options, command) => {
     service.run(function () {
@@ -38,23 +38,9 @@ program
       service.stop(0);
     });
 
-program
-  .command('add')
-  .description('Add PilotNode to Services')
-  .action(async () => {
-    process.exit(await Helper.addService());
-  });
-program
-  .command('remove')
-  .description('Remove PilotNode from Services')
-  .action(async () => {
-    process.exit(await Helper.removeService());
-  });
-
-
     //startup code
     try {
-      startup(options);
+      await startup(options);
     }
     catch (e) {
       console.log('Sorry, cannot continue, we are exiting.', e);
@@ -62,11 +48,45 @@ program
     }
   });
 
-program.version('0.4.0');
-program.parse(process.argv);
+program
+  .command('validate')
+  .option('-c, --config <configfile>', 'PilotNode Configuration File', ConfigService.cfgfile)
+  .option('-i, --identity <identityfile>', 'Identity File', ConfigService.identityfile)
+  .option('--debug', 'enable debug logging')
+  .description('Validates PilotNode configuration file')
+  .action(async (name, options, command) => {
+    let config = await config_init(options);
+    let results = config.validate();
+    if (results.length > 0) {
+      for (var result of results) {
+        console.log(result);
+      }
+    } else {
+      console.log(`No Errors in ${ConfigService.cfgfile} found.`);
+    }
+    process.exit(0);
+    });
+
+program
+  .command('install-service')
+  .description('Add PilotNode to Services')
+  .action(async () => {
+    process.exit(await Helper.addService());
+  });
+program
+  .command('remove-service')
+  .description('Remove PilotNode from Services')
+  .action(async () => {
+    process.exit(await Helper.removeService());
+  });
+
+  //program.version('0.3.8');
+  program.version(process.env.npm_package_version ?? '');
+  program.parse(process.argv);
 
 
-async function startup(options: any) {
+
+async function config_init(options: any): Promise<ConfigService> {
   if (options.basedir) {
     ConfigService.basedir = options.basedir;
     ConfigService.cfgfile = path.join(ConfigService.basedir, 'pilotnode.yml');
@@ -86,6 +106,11 @@ async function startup(options: any) {
 
   globalContainer.bind(ConfigService).toConstantValue(configService);
 
+  return configService;
+}
+
+async function startup(options: any) {
+
   // handle parameters that need the configuration
   let logService = globalContainer.get(LoggingService);
   logService.logLevel = LogLevel.debug;
@@ -93,6 +118,8 @@ async function startup(options: any) {
     logService.log(LogLevel.info, 'running in DEBUG logging mode');
     globalContainer.get(LoggingService).logLevel = LogLevel.debug;
   }
+
+  let configService = await config_init(options);
 
   // check if file system permissions are present
   if (!await Helper.checkfs([ConfigService.cfgfile, ConfigService.getAbsoluteTokenSetFilePath(configService.config)])) {

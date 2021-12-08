@@ -1,0 +1,58 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "$ref": "#/definitions/config",
+  "definitions": {
+      "config": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+              "url": {
+                  "type": "string",
+                  "description": "URL the server should listen to",
+                  "examples": ["http://0.0.0.0"],
+                  "format": "uri",
+                  "qt-uri-protocols": [
+                      "http", "https"
+                  ]
+              },
+              "endpoint": {
+                  "type": "string",
+                  "description": "GraphQL Endpoint, added after #"
+              },
+              "port": {
+                  "type": "integer"
+              },
+              "playground": {
+                  "type": "boolean",
+                  "description": "Enable GraphQL Playground"
+              },
+              "apps": {
+                  "type": "array",
+                  "items": {
+                      "$ref": "#/definitions/App"
+                  }
+              }
+          },
+          "title": "Server Connector Configuration",
+          "description": "Configures the Server Connector",
+          "examples": ["url: http://0.0.0.0\r\nport: 8080"]
+      },
+      "App": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+              "endpoint": {
+                  "type": "string"
+              },
+              "path": {
+                  "type": "string"
+              }
+          },
+          "required": [
+              "endpoint",
+              "path"
+          ],
+          "title": "App"
+      }
+  }
+}

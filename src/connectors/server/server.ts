@@ -19,7 +19,7 @@ import {
 } from "graphql";
 
 const moment = require("moment");
-const red = require("node-red");
+import * as red from "node-red";
 const express = require("express");
 const { ApolloServer } = require("apollo-server-express");
 import { ConnectionContext, SubscriptionServer } from 'subscriptions-transport-ws';
@@ -37,13 +37,13 @@ class ServeApp {
 
 class ServerConfig {
   url: string = "http://localhost";
-  ws: string = "ws://localhost";
   endpoint: string = "/graphql";
   playground: Boolean = false;
   port: number = 9000;
   apps: ServeApp[] = [];
 
-  ruleengine: any =  {
+  enableNodeRed: Boolean = false;
+  nodered: any =  {
   httpAdminRoot: '/',
   httpNodeRoot: '/api', // /api
   userDir: ConfigService.basedir,
@@ -174,10 +174,12 @@ export class ServerConnector implements IConnector {
 
 
     //node red
-    if (that.serverconfig.ruleengine) {
-      red.init(app, that.serverconfig.ruleengine);
-      app.use(that.serverconfig.ruleengine.httpAdminRoot, red.httpAdmin)
-      app.use(that.serverconfig.ruleengine.httpNodeRoot, red.httpNode)
+    if (that.serverconfig.enableNodeRed) {
+      red.init(app, that.serverconfig.nodered);
+      app.use(that.serverconfig.nodered.httpAdminRoot, red.httpAdmin)
+      app.use(that.serverconfig.nodered.httpNodeRoot, red.httpNode)
+
+      //red.hooks.add()
     }
 
     for (let appspec of this.serverconfig.apps) {
@@ -192,10 +194,9 @@ export class ServerConnector implements IConnector {
 
     server.listen({ port: that.serverconfig.port }, () => {
       that.log.log( LogLevel.info, `GraphQL URL: ${that.serverconfig.url}:${that.serverconfig.port}${that.serverconfig.endpoint}`);
-      that.log.log( LogLevel.info, `Subscriptions URL: ${that.serverconfig.ws}:${that.serverconfig.port}${that.serverconfig.endpoint}`);
     });
 
-    if (that.serverconfig.ruleengine) {
+    if (that.serverconfig.enableNodeRed) {
       red.start();
     }
   }

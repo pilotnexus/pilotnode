@@ -42,17 +42,17 @@ export class ApiService {
   async init(unauthorized: Boolean): Promise<ApolloClient<NormalizedCacheObject> | null> {
     let that = this;
     if (that.client === null) { //TODO: for now don't connect at all when unauthorized (there is not much we can read as an unauthorized user)
-      that.log.log(LogLevel.info, `Connecting to ${that.configService.config.graphqlurl} in unauthorized mode`);
+      that.log.log(LogLevel.info, `Connecting to ${that.configService.config.pilotapiurl} in unauthorized mode`);
       try {
         const cache = new InMemoryCache();
         let headers = unauthorized ? {} : { "Authorization": await that.auth.token() };
 
         const httpLink = new HttpLink({
-          uri: that.configService.config.graphqlurl,
+          uri: that.configService.config.pilotapiurl,
           fetch: this.auth.axiosfetch.bind(that.auth)
         });
         const wsLink = new WebSocketLink(
-          new SubscriptionClient(that.configService.config.graphqlwsurl,
+          new SubscriptionClient(that.configService.config.pilotapiws,
           {
             reconnect: true,
             connectionParams: () => ({ headers }),

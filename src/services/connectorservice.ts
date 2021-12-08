@@ -23,8 +23,6 @@ export class ConnectorService {
     let connectorFactories: {[type:string]: (name:string, config: any)=>IConnector} = connectors.reduce((map: any, obj: any) => (map[obj.type] = obj.create.bind(obj), map), {});
     
     // initialize default connectors
-    //that.connectors[LocalConnector.CONNECTOR_CLASS] = connectorFactories[LocalConnector.CONNECTOR_CLASS](LocalConnector.CONNECTOR_CLASS, {});
-    //that.connectors[LocalConnector.CONNECTOR_CLASS].init();
     for (const c of connectors) {
       if (c.hasOwnProperty('CONNECTOR_CLASS')) {
         //only add if not configured manually

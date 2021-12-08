@@ -8,6 +8,12 @@ import { LoggingService, LogLevel } from "./loggingservice";
 import path from 'path';
 import * as Joi from 'joi';
 import { v4 as uuid_v4 } from 'uuid';
+import { globalContainer } from "../inversify.config";
+import { IConnectorValidator } from "../connector_validators/connectorvalidator";
+import { NAMED_OBJECTS } from "../inversify.config";
+import { IConnectorFactory } from "../connectors/connector";
+import { IConnector } from "../connectors/connector";
+import { Helper } from "../helper";
 const address = require('address');
 
 export enum ConfigMode {
@@ -22,19 +28,14 @@ export interface IConnectorConfig {
   autobind?: any;
 }
 
-const IConnectorConfigSchema = Joi.array().items({
-  name: Joi.string(),
-  type: Joi.string(),
-  config: Joi.object(),
-  autobind: Joi.object()
-});
+const tokenSetFileDefaultValue = "./auth.json";
 
 /// Data in this interface is persisted to the config file
 export class Config {
   nodeid: string = ''; // local only (set by pilot setup)
 
-  graphqlurl: string = 'https://gql.pilotnexus.io/v1/graphql';
-  graphqlwsurl: string = 'wss://gql.pilotnexus.io/v1/graphql';
+  pilotapiurl: string = 'https://gql.pilotnexus.io/v1/graphql';
+  pilotapiws: string = 'wss://gql.pilotnexus.io/v1/graphql';
   configmode: ConfigMode = ConfigMode.server; // local only
 
   connectors: IConnectorConfig[] = [];
@@ -43,24 +44,13 @@ export class Config {
   // tokenset file path, relative to config file path
   tokenSetFile: string = '';
 
-  ConfigSchema = Joi.object().keys({
-    nodeid: Joi.string(),
-    connectors: IConnectorConfigSchema,
-    values: Joi.object()
-  })
-
   public constructor(init?: Partial<Config>) {
 
     if (!this.tokenSetFile) {
-      this.tokenSetFile = './auth.json'
+      this.tokenSetFile = tokenSetFileDefaultValue;
     }
 
-    const result = this.ConfigSchema.validate(init);
-    if (result.error) {
-      throw new Error(result.error.message);
-    }
-
-    Object.assign(this, result.value);
+    Object.assign(this, init);
   }
 }
 
@@ -139,37 +129,52 @@ export class ConfigService {
   constructor(public config: Config, public toServer: ToServerConfig, public tokenSet: TokenSet, private log: LoggingService) {
   }
 
-  verify(config: Config): boolean {
-    let ok = true;
+  ConfigSchema = Joi.object().keys({
+    nodeid: Joi.string().required(),
+    name: Joi.string(),
+    pilotapiurl: Joi.string(),
+    pilotapiws: Joi.string(),
+    configmode: Joi.string().valid(...Helper.getEnumValues(ConfigMode)),
+    tokenSetFile: Joi.string(),
+    connectors: Joi.array(),
+    values: Joi.object()
+  })
 
+  validate(): Array<Joi.ValidationResult<any>> {
 
+    let that = this;
+    let validationResults: Array<Joi.ValidationResult<any>> = [];
 
-    //checks
-
-    //let subscriptions = [];
-    //if (config.subscriptions) {
-    //  ConfigService.flattenSubscriptions(config.subscriptions, subscriptions);
-    //}
-
-    //config.subscriptions = subscriptions;
-
-    //if (!config.pilotapiurl) {
-    //  config.pilotapiurl = ConfigService.defaultapiurl;
-    //}
-    //if (!config.configmode) {
-    //  config.configmode = ConfigMode.server;
-    //}
-
-    if (!config.nodeid) {
-      this.log.log(
-        LogLevel.error,
-        "No Node Id. Please configure node first using the pilot config tool."
-      );
-      ok = false;
-    } else {
-      this.log.log(LogLevel.info, `Node Id: ${config.nodeid}`);
+    //validate root objects
+    var result = that.ConfigSchema.validate(that.config);
+    if (result.error) {
+      validationResults.push(result);
     }
-    return ok;
+
+    let connectors: any[] =  globalContainer.getAll<IConnectorFactory>(NAMED_OBJECTS.CONNECTOR); 
+    let connectorFactories: {[type:string]: (name:string, config: any)=>IConnector} = connectors.reduce((map: any, obj: any) => (map[obj.type] = obj.create.bind(obj), map), {});
+    let connector_validators: any[] =  globalContainer.getAll<IConnectorValidator>(NAMED_OBJECTS.CONNECTOR_VALIDATOR); 
+    let connector_validator_configschema: {[type:string]: ()=>Joi.ObjectSchema<any>} = connector_validators.reduce((map: any, obj: any) => (map[obj.type] = obj.configschema.bind(obj), map), {});
+
+
+    if (that.config.connectors) {
+      for (let conn of that.config.connectors) {
+        if (conn.type in connectorFactories) {
+          if (conn.type in connector_validator_configschema) {
+            let configschema = connector_validator_configschema[conn.type]();
+            let result = configschema.validate(conn.config);
+            if (result.error) {
+              validationResults.push(result);
+            }
+          } else {
+             that.log.log(LogLevel.error, `Connector '${conn.name}' has no validator`);
+          }
+        } else {
+          that.log.log(LogLevel.error, `Connector '${conn.name}' does not have type specified`);
+        }
+      }
+    }
+    return validationResults;
   }
   
   static async loadToServerConfig(log: LoggingService): Promise<ToServerConfig> {
@@ -239,7 +244,7 @@ export class ConfigService {
   static async loadIdentity(log: LoggingService): Promise<Config> {
     let identityfile = path.resolve(ConfigService.identityfile);
     try {
-      log.log(LogLevel.info, "Parsing " + identityfile);
+      log.log(LogLevel.debug, "Parsing " + identityfile);
       
       if (!fse.existsSync(identityfile)) {
         log.log(LogLevel.warn, "Identity file does not exist, generating one with a new Node ID");
@@ -258,7 +263,7 @@ export class ConfigService {
     // load config
     let cfgfile = path.resolve(ConfigService.cfgfile);
     try {
-      log.log(LogLevel.info, "Parsing " + cfgfile);
+      log.log(LogLevel.debug, "Parsing " + cfgfile);
       
       if (!fse.existsSync(cfgfile)) {
         log.log(LogLevel.warn, "Configuration file does not exist, generating one with a new Node ID");
@@ -280,10 +285,19 @@ export class ConfigService {
         }
       }
 
-      let identity = this.loadIdentity(log);
-      //create object and sanity check configuration
-      let configObj = new Config({...identity, ...config});
+      //Integrate uuid as nodeid and name to config from shared config file. 
+      let identity: any = await this.loadIdentity(log);
+      if (identity && identity["uuid"]) {
+        config["nodeid"] = identity["uuid"];
+      }
+      if (identity && identity["name"]) {
+        config["name"] = identity["name"];
+      }
 
+      //create object and sanity check configuration
+      let configObj = new Config(config);
+
+      log.log(LogLevel.debug, `Node Id: ${configObj.nodeid}`);
       return configObj;
     } catch (e) {
       log.log(LogLevel.error, `ERROR: Could not load config file ${ConfigService.cfgfile}`, e);
@@ -304,7 +318,12 @@ export class ConfigService {
   }
 
   static getAbsoluteTokenSetFilePath(config:Config) {
-    return path.resolve(path.dirname(path.resolve(ConfigService.cfgfile)), config.tokenSetFile);
+    let tokenSetFile = tokenSetFileDefaultValue;
+    if (config.tokenSetFile) {
+      tokenSetFile = config.tokenSetFile; 
+    }
+
+    return path.resolve(path.dirname(path.resolve(ConfigService.cfgfile)), tokenSetFile);
   }
 
   static async loadTokenset(config: Config): Promise<TokenSet> {

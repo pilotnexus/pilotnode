@@ -1,0 +1,89 @@
+{
+  "$id": "https://pilotnexus.io/pilotnode.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "pilotnode configuration file",
+  "type": "object",
+  "definitions": {
+    "connector": {
+      "type": "object",
+      "properties": {
+        "name": { 
+            "type": "string",
+            "description": "name of the connector"
+        },
+        "type": { 
+          "type": "string",
+          "description": "The name of a connector plugin"
+        }
+      },
+      "required": ["name", "type"],
+      "if": {
+        "properties": { "type":  { "const": "server"}},
+        "required": ["type"]
+      },
+      "then": {
+        "properties": {
+          "config": {"$ref": "./connector_validators/server/config.schema.json" }
+        }
+      }
+    },
+    "valueprops": {
+      "type": "object",
+      "properties": {
+        "datatype": {
+          "type": "string",
+          "description": "Datatype of the value",
+          "enum": [
+            "boolean",
+            "int",
+            "double",
+            "string",
+            "datetime",
+            "object",
+            "stream"
+          ]
+        },
+        "valuetype": {
+          "type": "string",
+          "description": "Value type",
+          "default": "generic",
+          "enum": [
+            "generic",
+            "temperature",
+            "timestamp",
+            "switch"
+          ]
+        }
+      }
+    }
+  },
+  "properties": {
+    "connectors": {
+      "type": "array",
+      "description": "connector configuration",
+      "items": {
+        "$ref": "#/definitions/connector"
+      }
+    },
+    "values": {
+      "description": "defined values",
+      "type": "object",
+      "patternProperties": {
+        ".*": {
+          "type": "object",
+          "description": "Value name",
+          "properties": {
+            "bindings": {
+              "type": "object",
+              "description": "Binding to connectors"
+            },
+            "properties": {
+              "$ref": "#/definitions/valueprops"
+            }
+          }
+        }
+      }
+
+    }
+  }
+}
