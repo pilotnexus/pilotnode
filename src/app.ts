@@ -25,18 +25,22 @@ process.on('uncaughtException', function (exception) {
 });
 
 program
-  .command('run', { isDefault: true})
+  .command('run', { isDefault: true })
   .option('-c, --config <configfile>', 'PilotNode Configuration File', ConfigService.cfgfile)
   .option('-i, --identity <identityfile>', 'Identity File', ConfigService.identityfile)
-  .option('--auth', 'authenticate with Pilot Cloud')
-  .option('--debug', 'enable debug logging')
+  .option('-a, --auth', 'authenticate with Pilot Cloud')
+  .option('-d, --debug', 'enable debug logging')
+  .option('-s, --setvariables [varfile]', 'set variables from variable file')
   .description('Runs PilotNode')
-  .action(async (name, options, command) => {
+  .action(async (options, command) => {
     service.run(function () {
       // Stop request received (i.e. a kill signal on Linux or from the
       // Service Control Manager on Windows), so let's stop!
       service.stop(0);
     });
+
+    console.log("options");
+    console.log(options);
 
     //startup code
     try {
@@ -54,7 +58,7 @@ program
   .option('-i, --identity <identityfile>', 'Identity File', ConfigService.identityfile)
   .option('--debug', 'enable debug logging')
   .description('Validates PilotNode configuration file')
-  .action(async (name, options, command) => {
+  .action(async (options, command) => {
     let config = await config_init(options);
     let results = config.validate();
     if (results.length > 0) {
@@ -65,7 +69,7 @@ program
       console.log(`No Errors in ${ConfigService.cfgfile} found.`);
     }
     process.exit(0);
-    });
+  });
 
 program
   .command('install-service')
@@ -80,9 +84,8 @@ program
     process.exit(await Helper.removeService());
   });
 
-  //program.version('0.3.8');
-  program.version(process.env.npm_package_version ?? '');
-  program.parse(process.argv);
+program.version('0.3.9'); //TODO, unify with package.json?
+program.parse(process.argv);
 
 
 
@@ -126,19 +129,25 @@ async function startup(options: any) {
     process.exit(1);
   }
 
-  let varSource = path.join(ConfigService.basedir, "variables");
-  let varTarget = "/proc/pilot/plc/varconfig";
+  if (options.setvariables !== undefined) {
+    let varSource = options.setvariables === true ? ConfigService.variablefile : options.setvariables;
+    let varTarget = "/proc/pilot/plc/varconfig";
 
-  if (fse.existsSync(varSource) && fse.existsSync(varTarget)) {
-    logService.log(LogLevel.info, 'Found PLC variables...');
-    try {
-      fse.copyFileSync(varSource, varTarget);
-      logService.log(LogLevel.info, 'PLC variables set');
-    }
-    catch {
-      logService.log(LogLevel.error, 'Could not set PLC variables');
+    if (fse.existsSync(varSource) && fse.existsSync(varTarget)) {
+      logService.log(LogLevel.info, `Found PLC variables at ${varSource}`);
+      try {
+        fse.copyFileSync(varSource, varTarget);
+        logService.log(LogLevel.info, 'PLC variables set');
+      }
+      catch(e: any) {
+        logService.log(LogLevel.error, 'Could not set PLC variables');
+        logService.log(e);
+      }
+    } else {
+      logService.log(LogLevel.error, `Variable file ${options.setvariables} does not exist, skipping`);
     }
   }
+
 
   let unauthorized = false;
   let auth = globalContainer.get(AuthService);
@@ -165,7 +174,7 @@ async function main(configService: ConfigService, logService: LoggingService) {
     logService.log(LogLevel.info, "Real Time", result.now);
     logService.log(LogLevel.info, "offset in milliseconds", result.offset);
   }
-  catch(e) {
+  catch (e) {
     logService.log(LogLevel.error, "Cannot get time from NTP server");
     logService.log(LogLevel.error, e);
   }

@@ -1,6 +1,6 @@
 {
   "name": "pilotnode",
-  "version": "0.3.8",
+  "version": "0.4.0",
   "preview": true,
   "description": "Pilot Client Node",
   "keywords": [
@@ -35,7 +35,6 @@
     "agentkeepalive": "^4.1.4",
     "apollo-server-core": "^3.5.0",
     "apollo-server-express": "^3.5.0",
-    "async-child-process": "^1.1.1",
     "axios": "^0.24.0",
     "chalk": "^4.1.2",
     "class-validator": "^0.13.2",

@@ -121,6 +121,8 @@ export class ConfigService {
   static cfgfile: string = `${ConfigService.basedir}pilotnode.yml`;
   // Shared file (Pilot Daemon/Pilot Node) containing Node Name and UUID
   static identityfile: string = `${ConfigService.basedir}config.yml`;
+  // Saved variable file
+  static variablefile: string = `${ConfigService.basedir}variables`;
   static defaultapiurl: string = "https://gql.pilotnexus.io/v1/query";
 
   /// configuration parameters loaded from Pilot Cloud Service
