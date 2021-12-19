@@ -24,6 +24,8 @@ process.on('uncaughtException', function (exception) {
   // email as well ?
 });
 
+let terminate: Function | null = null;
+
 program
   .command('run', { isDefault: true })
   .option('-c, --config <configfile>', 'PilotNode Configuration File', ConfigService.cfgfile)
@@ -33,15 +35,18 @@ program
   .option('-s, --setvariables [varfile]', 'set variables from variable file')
   .description('Runs PilotNode')
   .action(async (options, command) => {
-    service.run(function () {
-      // Stop request received (i.e. a kill signal on Linux or from the
-      // Service Control Manager on Windows), so let's stop!
+    service.run(async () => {
+      console.log("Stop request received");
+      if (terminate) {
+        await terminate();
+      }
+
       service.stop(0);
     });
 
     //startup code
     try {
-      await startup(options);
+      terminate = await startup(options);
     }
     catch (e) {
       console.log('Sorry, cannot continue, we are exiting.', e);
@@ -109,7 +114,7 @@ async function config_init(options: any): Promise<ConfigService> {
   return configService;
 }
 
-async function startup(options: any) {
+async function startup(options: any): Promise<Function> {
 
   // handle parameters that need the configuration
   let logService = globalContainer.get(LoggingService);
@@ -160,10 +165,10 @@ async function startup(options: any) {
   let api = globalContainer.get(ApiService);
   await api.init(unauthorized); //initialize graphql subscribe
 
-  await main(configService, logService);
+  return main(configService, logService);
 }
 
-async function main(configService: ConfigService, logService: LoggingService) {
+async function main(configService: ConfigService, logService: LoggingService): Promise<Function> {
   try {
     const timeSync = NtpTimeSync.getInstance();
     const result = await timeSync.getTime();
@@ -180,7 +185,7 @@ async function main(configService: ConfigService, logService: LoggingService) {
   const connectorService = globalContainer.get(ConnectorService);
 
   // call all init hooks
-  await connectorService.init();
+  let terminate = await connectorService.init();
 
   const valueService = globalContainer.get(ValueService);
 
@@ -217,4 +222,6 @@ async function main(configService: ConfigService, logService: LoggingService) {
   //try {
   //let bleService = new BleService( (node && node.name) ? node.name : "Pilot Nexus", config);
   //} catch {}
+
+  return terminate;
 }

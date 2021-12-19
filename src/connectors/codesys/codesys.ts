@@ -2,61 +2,56 @@ import { injectable, inject } from "inversify";
 import * as knx from 'knx';
 import { ConnectorConfig, ValueGroup, SubValue } from '../../value';
 import { ConfigService } from '../../services/configservice';
-import { KnxValueConfig } from './knxvalueconfig';
+import { CodesysValueConfig } from './codesysvalueconfig';
 import { LoggingService, LogLevel } from '../../services/loggingservice';
 import { IConnectorFactory, IConnector } from '../connector';
 import { globalContainer } from "../../inversify.config";
 import { provide } from 'inversify-binding-decorators';
 import { NAMED_OBJECTS } from "../../inversify.config";
 
+import { client } from 'netvar';
+
+
 var colors = require('colors/safe'); // does not alter string prototype
 
-class KnxConfig {
+class CodesysConfig {
     ip: string = '';
-    port: number = 3671;
-    reconnectinterval = 30000;
+    port: number = 1202;
     debug: boolean = false;
-    addr: string = '15.15.0';
   
-    public constructor(init?: Partial<KnxConfig>) {
+    public constructor(init?: Partial<CodesysConfig>) {
       Object.assign(this, init);
     }
 }
 
 @injectable()
-export class KnxConnectorFactory implements IConnectorFactory {
-  type = 'knx';
+export class CodesysConnectorFactory implements IConnectorFactory {
+  type = 'codesys';
 
   create(name: string, config: any) : IConnector {
-    return new KnxConnector(name, config, globalContainer.get(LoggingService));
+    return new CodesysConnector(name, config, globalContainer.get(LoggingService));
   }
 }
 
 @injectable()
-export class KnxConnector implements IConnector {
-  connection:knx.Connection|null = null;
-  knxconfig: KnxConfig;
-  subs: {config: KnxValueConfig, valueGroup: ValueGroup}[] = [];
-  connected: boolean;
+export class CodesysConnector implements IConnector {
+  
+  connection: any = null;
+  codesysconfig: CodesysConfig;
+  subs: {config: CodesysValueConfig, valueGroup: ValueGroup}[] = [];
+  connected: boolean = false;
     public constructor(private name: string, config: any, private log: LoggingService) {
-    this.knxconfig = new KnxConfig(config);
+    this.codesysconfig = new CodesysConfig(config);
 
-    this.connected = false;
     this.subs = [];
   }
 
   async init() {
-    let that = this;
 
-    return async () => {
-      if (that.connection) {
-        that.connection.Disconnect();
-        that.log.log(LogLevel.info, "Connection to KNX Server closed.");
-      }
-    }
+    return async () => {}
   }
 
-  initSub(knxSub: KnxValueConfig, valueGroup: ValueGroup, connection: knx.Connection) {
+  initSub(knxSub: CodesysValueConfig, valueGroup: ValueGroup, connection: knx.Connection) {
     let that = this;
     if (knxSub.target_ga) {
       knxSub.target_datapoint = new knx.Datapoint({ga: knxSub.target_ga, dpt: knxSub.dpt}, connection);
@@ -83,7 +78,7 @@ export class KnxConnector implements IConnector {
     
   async addValue(config: any, valueGroup: ValueGroup) : Promise<any> {
     let that = this;
-    let knxsub = new KnxValueConfig(config);
+    let knxsub = new CodesysValueConfig(config);
     that.subs.push({config: knxsub, valueGroup: valueGroup });
     if (that.connected) {
       that.initSub(knxsub, valueGroup, that.connection as knx.Connection); //we know at this point that that.connection is not null, so pass with as knx.Connection, maybe do this nicer one rainy day
@@ -101,7 +96,7 @@ export class KnxConnector implements IConnector {
   }
     
   setValue(config: ConnectorConfig, val: ValueGroup, subValue: SubValue, value: any)  {
-    let knxValueConfig = config as KnxValueConfig;
+    let knxValueConfig = config as CodesysValueConfig;
 
     if (config.access[subValue]?.write) {
       if(subValue === SubValue.targetValue) {
@@ -117,35 +112,6 @@ export class KnxConnector implements IConnector {
   async valuesBound(values: { [name: string]: ValueGroup; }): Promise<void> {
     let that = this;
 
-    that.connection = new knx.Connection( {
-    // ip address and port of the KNX router or interface
-    ipAddr: that.knxconfig.ip, ipPort: that.knxconfig.port,
-    debug: that.knxconfig.debug,
-    physAddr: that.knxconfig.addr,
-    minimumDelay: 10,
-    handlers: {
-      // wait for connection establishment before sending anything!
-      connected: function() {
-        that.connected = true;
-        let sub: KnxValueConfig;
-        that.log.log(LogLevel.info, `Connector '${that.name}': ${colors.green('connected')}`);
-
-        for (const ga in that.subs) {
-          if (!that.subs[ga].config.initialized) {
-            that.initSub(that.subs[ga].config, that.subs[ga].valueGroup, that.connection as knx.Connection);
-          }
-        }
-      },
-      //get notified for all KNX events:
-      //event: function(evt, src, dest, value) {
-      //    that.log.log(LogLevel.info,`${new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')} **** KNX EVENT: ${evt}, src: ${src}, dest: ${dest}, value: ${value}`, value);
-      //  },
-        // get notified on connection errors
-        error: function(connstatus: string) {
-          that.connected = false;
-          that.log.log(LogLevel.error, `Connector '${that.name}': ${colors.red(connstatus)}`);
-        }
-      }
-    });
+    that.connection = client(that.codesysconfig.ip, that.codesysconfig.port);
   }
 }

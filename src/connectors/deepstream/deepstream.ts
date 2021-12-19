@@ -109,6 +109,13 @@ export class DeepstreamConnector implements IConnector {
         that.logService.log(LogLevel.error, "Connection to Deepstream Server failed");
       }
     });
+
+    return async () => {
+      if (that.client) {
+        that.client.close();
+        that.logService.log(LogLevel.info, "Connection to Deepstream Server closed.");
+      }
+    }
   }
 
   getRecord(sub: ConnectorConfig, valueGroup: ValueGroup): Rec {

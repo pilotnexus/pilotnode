@@ -7,7 +7,7 @@ import { LoggingService, LogLevel } from "../../services/loggingservice";
 
 export class FileService {
 
-  constructor(private nodeid: string, private log: LoggingService, private terminationFunctions: any) {
+  constructor(private nodeid: string, private logService: LoggingService, private terminationFunctions: any) {
   }
 
   public async add(
@@ -20,7 +20,7 @@ export class FileService {
       try {
         await fse.close(await fse.open(file.file, "w"));
       } catch {
-        that.log.log(LogLevel.error, `File ${file.file} did not exist and could not be created`);
+        that.logService.log(LogLevel.error, `File ${file.file} did not exist and could not be created`);
         successful = false;
       }
     }
@@ -81,6 +81,7 @@ export class FileService {
 
     terminationFunctions.push(() => {
       clearInterval(interval);
+      that.logService.log(LogLevel.debug, `removed ${valueGroup.fullname} polling interval`);
     });
   }
 

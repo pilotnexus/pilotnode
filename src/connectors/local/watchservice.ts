@@ -6,7 +6,7 @@ import { FileService } from './fileservice';
 
 export class WatchService {
 
-  constructor(private nodeid: string, private log: LoggingService, private terminationFunctions: any[]) {
+  constructor(private nodeid: string, private logService: LoggingService, private terminationFunctions: any[]) {
   }
 
   async add(w: WatchValueConfig, valueGroup: ValueGroup): Promise<WatchValueConfig> {
@@ -15,7 +15,7 @@ export class WatchService {
       if (w.epoll) {
         await that.epoll(w, valueGroup, that.terminationFunctions);
       } else {
-        await that.watch(w, valueGroup);
+        await that.watch(w, valueGroup, that.terminationFunctions);
       }
 
       if (w.access[SubValue.targetValue]?.write) {
@@ -29,8 +29,8 @@ export class WatchService {
       }
     }
     catch (e) {
-      that.log.log(LogLevel.error, 'Error creating Watcher');
-      that.log.log(LogLevel.error, e);
+      that.logService.log(LogLevel.error, 'Error creating Watcher');
+      that.logService.log(LogLevel.error, e);
     }
 
     return w;
@@ -43,24 +43,31 @@ export class WatchService {
       valueGroup.values[SubValue.targetValue].setValue(value, "__local.WatchService");
       valueGroup.values[SubValue.actualValue].setValue(value, "__local.WatchService");
     } catch (e) {
-      that.log.log(LogLevel.error, `error while reading watched file ${w.file}`);
-      that.log.log(LogLevel.error, e);
+      that.logService.log(LogLevel.error, `error while reading watched file ${w.file}`);
+      that.logService.log(LogLevel.error, e);
     }
   }
 
-  private async watch(w: WatchValueConfig, valueGroup: ValueGroup) {
+  private async watch(w: WatchValueConfig, valueGroup: ValueGroup, terminationFunctions: any[]) {
     let that = this;
     try {
       await that.readWatchFile(w, valueGroup);
-      fse.watch(w.file, async (eventType, filename) => {
+      let watcher = fse.watch(w.file, async (eventType, filename) => {
         if (filename && eventType == 'change') {
           await that.readWatchFile(w, valueGroup);
         }
       });
+
+      that.logService.log(LogLevel.debug, `adding termination function to ${valueGroup.fullname} watcher`);
+      terminationFunctions.push(() => {
+          that.logService.log(LogLevel.debug, `removing ${valueGroup.fullname} watcher`);
+          watcher.close();
+          that.logService.log(LogLevel.debug, `removed ${valueGroup.fullname} watcher`);
+        });
     }
     catch (e) {
-      that.log.log(LogLevel.error, `error while reading watched file ${w.file}`);
-      that.log.log(LogLevel.error, e);
+      that.logService.log(LogLevel.error, `error while reading watched file ${w.file}`);
+      that.logService.log(LogLevel.error, e);
     }
   }
 
@@ -71,7 +78,7 @@ export class WatchService {
         let valuefd = await fse.open(w.file, 'w+');
         w.data = Buffer.from("          ");
         let poller = new epoll.Epoll(async (err: string, fd: number, events: any) => {
-            that.log.log(LogLevel.debug, `epoll event fired for ${w.file}`);
+            that.logService.log(LogLevel.debug, `epoll event fired for ${w.file}`);
           // Read GPIO value file. Reading also clears the interrupt.
           let readResult = await fse.read(fd, w.data, 0, 10, 0);
           let value = readResult.buffer.toString('ascii', 0, readResult.bytesRead);
@@ -85,11 +92,12 @@ export class WatchService {
         terminationFunctions.push(
           () => {
             poller.remove(valuefd);
+            that.logService.log(LogLevel.debug, `removed ${valueGroup.fullname} epoll`);
           });
       }
       catch (e) {
-        that.log.log(LogLevel.error, `error while reading watched file ${w.file}`);
-        that.log.log(LogLevel.error, e);
+        that.logService.log(LogLevel.error, `error while reading watched file ${w.file}`);
+        that.logService.log(LogLevel.error, e);
       }
   }
 }

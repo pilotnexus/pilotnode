@@ -79,6 +79,7 @@ export class LocalConnector implements IConnector {
     );
     this.commandService = new CommandService(
       config.config.nodeid,
+      this.log,
       this.terminationFunctions
     );
     this.serialService = new SerialService(config.config.nodeid);
@@ -103,6 +104,13 @@ export class LocalConnector implements IConnector {
 
     //let digitalioservice = new DigitalIOService();
     //digitalioservice.update();
+    return async () => {
+      that.log.log(LogLevel.debug, `closing ${that.terminationFunctions.length} local connector values...`);
+      for(let terminate of that.terminationFunctions) {
+        await terminate();
+      }
+      that.log.log(LogLevel.info, "local connector closed");
+    }
   }
 
   async valuesCreated(values: { [name: string]: ValueGroup }): Promise<void> {

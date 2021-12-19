@@ -1,7 +1,7 @@
 import { ValueGroup, ConnectorConfig, SubValue } from "../value";
 
 export interface IConnector {
-  init(): void;
+  init(): Promise<Function>;
   valuesCreated( values: { [name: string]: ValueGroup } ): Promise<void>; 
   valuesBound( values: { [name: string]: ValueGroup } ): Promise<void>; 
 

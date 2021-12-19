@@ -63,7 +63,7 @@ export class RosConnector implements IConnector {
 
   }
 
-  init(): void {
+  async init(): Promise<Function> {
     let that = this;
     if (that.rosConfig.cmake_prefix_path) {
       process.env.CMAKE_PREFIX_PATH = that.rosConfig.cmake_prefix_path;
@@ -80,6 +80,12 @@ export class RosConnector implements IConnector {
       that.logService.log(LogLevel.info, `Connector '${that.name}': ${colors.green('connected')}`);
       that.rosConfig.subscriptions.forEach(sub => that.subscribe(rosNode, sub));
     })
+
+    return async () => {
+      if (rosnode) {
+        that.logService.log(LogLevel.info, "Connection to ROS closed.");
+      }
+    }
   }
 
   async valuesCreated(values: { [name: string]: ValueGroup; }): Promise<void> {

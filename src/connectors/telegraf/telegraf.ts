@@ -75,7 +75,15 @@ export class TelegrafConnector implements IConnector {
   }
 
   async init() {
-   this.tryinit();
+    let that = this;
+   that.tryinit();
+
+    return async () => {
+      if (that.client) {
+        that.client?.destroy();
+        that.log.log(LogLevel.info, "Telegraf Connector closed.");
+      }
+    }
   }
 
   async addValue(config: any, val: ValueGroup) : Promise<any> {

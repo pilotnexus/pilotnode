@@ -93,7 +93,14 @@ export class ServerConnector implements IConnector {
     this.schema = new PilotNodeGraphQLSchema(this.name, this.valueService, this.rpcService, this.configService);
   }
 
-  async init() {}
+  async init() {
+    let that = this;
+
+    return async () => {
+      //TODO!
+        that.log.log(LogLevel.info, "Server Connector closed.");
+    }
+  }
 
   async addValue(config: any, val: ValueGroup): Promise<any> {
     //val.values[''].getValue()

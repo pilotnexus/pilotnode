@@ -1,11 +1,12 @@
 import * as cron from "node-cron";
 import { CommandValueConfig } from "./commandvalueconfig";
 import { ValueGroup, Value, SubValue } from "../../value";
+import { LoggingService, LogLevel } from "../../services/loggingservice";
 
 var exec = require("child_process").exec;
 
 export class CommandService {
-  constructor(private nodeid: string, private terminationFunctions: any[]) {
+  constructor(private nodeid: string, private logService: LoggingService, private terminationFunctions: any[]) {
     this.terminationFunctions = terminationFunctions;
   }
 
@@ -25,6 +26,7 @@ export class CommandService {
 
       that.terminationFunctions.push(() => {
         clearInterval(interval);
+        that.logService.log(LogLevel.debug, `removed ${valueGroup.fullname} polling interval`);
       });
     } else if (cron.validate(cmd.cron)) {
       var task = cron.schedule(cmd.cron, function() {
@@ -33,9 +35,10 @@ export class CommandService {
 
       that.terminationFunctions.push(() => {
         task.stop();
+        that.logService.log(LogLevel.debug, `removed ${valueGroup.fullname} cron job`);
       });
     } else {
-      console.log(
+      that.logService.log(LogLevel.error,
         `could not add command subscription ${valueGroup.fullname}. Neither interval nor cron properties are valid`
       );
     }

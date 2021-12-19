@@ -170,6 +170,13 @@ export class MqttConnector implements IConnector {
     //    that.logService.log(LogLevel.error, "Connection to Deepstream Server failed");
     //  }
     //});
+
+    return async () => {
+      //TODO!
+      if (that.client) {
+        that.logService.log(LogLevel.info, "Connection to MQTT Server closed.");
+      }
+    }
   }
 
   getRecord(sub: ConnectorConfig, valueGroup: ValueGroup): MqttRec {

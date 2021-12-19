@@ -33,6 +33,7 @@ interface ITelemetry {
 @injectable()
 export class TelemetryConnector implements IConnector {
 
+  terminate: Function | null = null;
   telemetryValues: {[key: string]: TelemetryValueConfig} = {};
   telemetry: ITelemetry | null = null;
 
@@ -46,13 +47,23 @@ export class TelemetryConnector implements IConnector {
   }
 
   async init() {
+    let that = this;
 
+    return async () => {
+      if (that.terminate) {
+        that.terminate();
+        that.logService.log(LogLevel.info, "Telegraf Connector closed.");
+      }
+    }
   }
 
   async runService(config: any) : Promise<ITelemetry> {
+    let that = this;
     const worker = new Worker(resolve(__dirname, 'telemetryworker.js'), {
       workerData: config
     });
+
+    that.terminate = worker.terminate;
 
     worker.on('message', async (result: any) => {
       try {

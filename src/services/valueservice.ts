@@ -66,28 +66,6 @@ export class ValueService {
     this.rpcService.expose("sys.values.getValue", getValue); 
   }
 
-  // depricated, used for recursive loading of old data structure
-  /*
-  valueIterator(path: string, values: any) {
-    for (const value in values) {
-      if (typeof values[value]["bindings"] !== "undefined") {
-        let valueKey = path + (path !== "" ? "/" : "") + value;
-        //TODO CHECK and throw error if not configured!
-        let properties = new ValueProperties(values[value]['properties']);
-        this.values[valueKey] = new ValueGroup(
-          this.config.config.nodeid,
-          valueKey,
-          values[value]["bindings"],
-          values[value]["config"],
-          properties
-        );
-      } else if(typeof values[value] === 'object') {
-        this.valueIterator(value, values[value]);
-      }
-    }
-  }
-  */
-
   async bind() {
     for (const name in this.values) {
       let currentValue = this.values[name];
