@@ -39,9 +39,6 @@ program
       service.stop(0);
     });
 
-    console.log("options");
-    console.log(options);
-
     //startup code
     try {
       await startup(options);
@@ -84,7 +81,7 @@ program
     process.exit(await Helper.removeService());
   });
 
-program.version('0.3.9'); //TODO, unify with package.json?
+program.version('0.4.1'); //TODO, unify with package.json?
 program.parse(process.argv);
 
 
@@ -116,7 +113,7 @@ async function startup(options: any) {
 
   // handle parameters that need the configuration
   let logService = globalContainer.get(LoggingService);
-  logService.logLevel = LogLevel.debug;
+  logService.logLevel = LogLevel.info;
   if (options.debug) {
     logService.log(LogLevel.info, 'running in DEBUG logging mode');
     globalContainer.get(LoggingService).logLevel = LogLevel.debug;

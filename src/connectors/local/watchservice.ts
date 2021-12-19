@@ -19,7 +19,7 @@ export class WatchService {
       }
 
       if (w.access[SubValue.targetValue]?.write) {
-        let writer = FileService.getWriter(w);
+        let writer = await FileService.getWriter(w, valueGroup.values[SubValue.targetValue]);
         valueGroup.values[SubValue.targetValue].changed( async (value) => {
           if (writer && typeof value !== 'undefined') {
             return await writer(value.toString());

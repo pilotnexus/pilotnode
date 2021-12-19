@@ -2,7 +2,7 @@ import * as fse from "fs-extra";
 
 import { Helper } from "../../helper";
 import { FileValueConfig, IFileValueConfig } from "./filevalueconfig";
-import { ValueGroup, SubValue } from "../../value";
+import { ValueGroup, SubValue, Value } from "../../value";
 import { LoggingService, LogLevel } from "../../services/loggingservice";
 
 export class FileService {
@@ -31,7 +31,7 @@ export class FileService {
       }
 
       if (file.access[SubValue.targetValue]?.write) {
-        let writer = await FileService.getWriter(file);
+        let writer = await FileService.getWriter(file, valueGroup.values[SubValue.targetValue]);
         valueGroup.values[SubValue.targetValue].changed(async (value) => {
           if (writer && typeof value !== 'undefined') {
             let valuedata = (typeof value === "boolean") ? (value === true ? "1" : "0") : value.toString();
@@ -84,7 +84,7 @@ export class FileService {
     });
   }
 
-  public static getWriter(file: IFileValueConfig): ((value: string) => Promise<boolean>) | null  {
+  public static getWriter(file: IFileValueConfig, v: Value): ((value: string) => Promise<boolean>) | null  {
     let writefile = file.file;
     if (file.writefile != null && file.writefile !== "") {
       //juggling check for undefined and null
@@ -92,7 +92,13 @@ export class FileService {
 
       return async (value) => {
         try {
-          //console.log('writing value ' + value)
+          if (v.properties.isBoolean()) {
+            if (value === 'true' || value === 'on' || value === '1' || value === 'enable') {
+              value = '1';
+            } else {
+              value = '0';
+            }
+          }
           await fse.writeFile(writefile, value, { encoding: "utf8" });
         }
         catch (e) {
