@@ -52,7 +52,6 @@ export class TelemetryConnector implements IConnector {
     return async () => {
       if (that.terminate) {
         that.terminate();
-        that.logService.log(LogLevel.info, "Telegraf Connector closed.");
       }
     }
   }

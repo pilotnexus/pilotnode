@@ -98,7 +98,6 @@ export class ServerConnector implements IConnector {
 
     return async () => {
       //TODO!
-        that.log.log(LogLevel.info, "Server Connector closed.");
     }
   }
 

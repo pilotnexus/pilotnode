@@ -172,9 +172,8 @@ export class MqttConnector implements IConnector {
     //});
 
     return async () => {
-      //TODO!
       if (that.client) {
-        that.logService.log(LogLevel.info, "Connection to MQTT Server closed.");
+        that.client.end(true);
       }
     }
   }

@@ -82,9 +82,6 @@ export class RosConnector implements IConnector {
     })
 
     return async () => {
-      if (rosnode) {
-        that.logService.log(LogLevel.info, "Connection to ROS closed.");
-      }
     }
   }
 

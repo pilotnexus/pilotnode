@@ -58,7 +58,6 @@ export class WatchService {
         }
       });
 
-      that.logService.log(LogLevel.debug, `adding termination function to ${valueGroup.fullname} watcher`);
       terminationFunctions.push(() => {
           that.logService.log(LogLevel.debug, `removing ${valueGroup.fullname} watcher`);
           watcher.close();

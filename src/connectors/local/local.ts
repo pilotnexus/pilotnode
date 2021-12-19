@@ -109,7 +109,6 @@ export class LocalConnector implements IConnector {
       for(let terminate of that.terminationFunctions) {
         await terminate();
       }
-      that.log.log(LogLevel.info, "local connector closed");
     }
   }
 

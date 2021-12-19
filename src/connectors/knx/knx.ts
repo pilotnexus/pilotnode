@@ -51,7 +51,6 @@ export class KnxConnector implements IConnector {
     return async () => {
       if (that.connection) {
         that.connection.Disconnect();
-        that.log.log(LogLevel.info, "Connection to KNX Server closed.");
       }
     }
   }

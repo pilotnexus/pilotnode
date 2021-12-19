@@ -48,8 +48,7 @@ export class RuleEngineConnector implements IConnector {
     let that = this;
 
     return async () => {
-      //TODO!
-        that.log.log(LogLevel.info, "Connection to RuleEngine closed.");
+      //TODO
     }
   }
 

@@ -81,7 +81,6 @@ export class TelegrafConnector implements IConnector {
     return async () => {
       if (that.client) {
         that.client?.destroy();
-        that.log.log(LogLevel.info, "Telegraf Connector closed.");
       }
     }
   }

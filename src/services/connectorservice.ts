@@ -12,12 +12,12 @@ export class ConnectorService {
   public connectors: { [name: string]: IConnector; } = {};
   public autobind: {[key: string]: any} = {};
 
-  constructor(private config: ConfigService, private log: LoggingService) {
+  constructor(private config: ConfigService, private logService: LoggingService) {
   }
 
   async init (): Promise<Function> {
     let that = this;
-    let terminate: Array<Function> = [];
+    let terminate: Array<[string, Function]> = [];
 
     let connectors: any[] =  globalContainer.getAll<IConnectorFactory>(NAMED_OBJECTS.CONNECTOR); 
     // maps the array to a hashmap, where the connector type ('deepstream', ...) is the key and the factory function create() the value (bound to the factory class)
@@ -43,21 +43,22 @@ export class ConnectorService {
       for (let conn of that.config.config.connectors) {
         if (conn.type in connectorFactories) {
           that.connectors[conn.name] = connectorFactories[conn.type](conn.name, conn.config ? conn.config : {});
-          terminate.push(await that.connectors[conn.name].init());
+          terminate.push([conn.name, await that.connectors[conn.name].init()]);
           
           if (conn.autobind) {
             that.autobind[conn.name] = conn.autobind;
           }
         } else {
-          that.log.log(LogLevel.error, `Connector '${conn.name}' does not have type specified`);
+          that.logService.log(LogLevel.error, `Connector '${conn.name}' does not have type specified`);
         }
         
       }
     }
 
     return async () => {
-      for (let term of terminate) {
+      for (let [name, term] of terminate) {
         await term();
+        that.logService.log(LogLevel.info, `Connector '${name}' closed`);
       }
     };
   }
