@@ -80,7 +80,12 @@ export class Value {
 
     if (that.properties.isNumber()) {
       value = Number(value);
-      if ('round' in that.properties) {
+      if (that.properties.delta !== undefined) {
+        if ((value > (that.value - that.properties.delta)) && (value < (that.value + that.properties.delta))) {
+          return; //don't update if delta is too small
+        }
+      }
+      if (that.properties.round !== undefined) {
         value = value.toFixed(that.properties.round)
       }
     } else if (that.properties.isBoolean()) {
@@ -135,7 +140,14 @@ export class ValueProperties {
   @IsEnum(ValueType)
   valuetype: ValueType;
 
-  round?: Number;
+  // round to given number of digits
+  round?: number;
+
+  // minimum delta to update value
+  // e.g. if delta=5 and value changes from 100 to 104, no update is performed.
+  //      however if value changes from 100 to 106 the value is updated.
+  // useful for analog readings that change frequently due to noise
+  delta?: number;
 
   set datatype(datatype: DataType) {
     this._datatype = datatype ;

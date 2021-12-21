@@ -3,6 +3,7 @@ import { WatchValueConfig } from './watchvalueconfig';
 import { ValueGroup, SubValue } from '../../value';
 import { LoggingService, LogLevel } from '../../services/loggingservice';
 import { FileService } from './fileservice';
+import epoll from 'epoll';
 
 export class WatchService {
 
@@ -72,15 +73,15 @@ export class WatchService {
 
   private async epoll(w: WatchValueConfig, valueGroup: ValueGroup, terminationFunctions: any[]) {
     let that = this;
-    let epoll = await import('epoll')
       try {
         let valuefd = await fse.open(w.file, 'w+');
         w.data = Buffer.from("          ");
-        let poller = new epoll.Epoll(async (err: string, fd: number, events: any) => {
+        that.logService.log(LogLevel.debug, `creating poller for ${w.file}`);
+        let poller = new epoll.Epoll((err: string, fd: number, events: any) => {
             that.logService.log(LogLevel.debug, `epoll event fired for ${w.file}`);
           // Read GPIO value file. Reading also clears the interrupt.
-          let readResult = await fse.read(fd, w.data, 0, 10, 0);
-          let value = readResult.buffer.toString('ascii', 0, readResult.bytesRead);
+          let bytesRead = fse.readSync(fd, w.data, 0, 10, 0);
+          let value = w.data.toString('ascii', 0, bytesRead);
           valueGroup.values[SubValue.targetValue].setValue(value, "__local.WatchService");
           valueGroup.values[SubValue.actualValue].setValue(value, "__local.WatchService");
         });
