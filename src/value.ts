@@ -100,7 +100,9 @@ export class Value {
         value = !!value;
       }
     } else if (that.properties.isString()) {
-      value = JSON.stringify(value);
+      if (typeof value !== 'string') {
+        value = JSON.stringify(value);
+      }
     }
 
     if (value !== that.value) {

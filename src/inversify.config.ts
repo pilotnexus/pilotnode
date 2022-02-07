@@ -3,6 +3,7 @@ import { buildProviderModule } from 'inversify-binding-decorators'
 import { IConnectorFactory } from './connectors/connector';
 import { DeepstreamConnectorFactory } from './connectors/deepstream/factory';
 import { KnxConnectorFactory } from './connectors/knx/knx';
+import { NetvarConnectorFactory } from './connectors/netvar/netvar';
 import { LocalConnectorFactory } from './connectors/local/local';
 import { TelegrafConnectorFactory } from './connectors/telegraf/telegraf';
 import { RuleEngineFactory } from './connectors/rule/rule';
@@ -25,6 +26,7 @@ const globalContainer = new Container({ autoBindInjectable: true, defaultScope: 
 
 globalContainer.bind<IConnectorFactory>(NAMED_OBJECTS.CONNECTOR).to(DeepstreamConnectorFactory);
 globalContainer.bind<IConnectorFactory>(NAMED_OBJECTS.CONNECTOR).to(KnxConnectorFactory);
+globalContainer.bind<IConnectorFactory>(NAMED_OBJECTS.CONNECTOR).to(NetvarConnectorFactory);
 globalContainer.bind<IConnectorFactory>(NAMED_OBJECTS.CONNECTOR).to(LocalConnectorFactory);
 globalContainer.bind<IConnectorFactory>(NAMED_OBJECTS.CONNECTOR).to(TelegrafConnectorFactory);
 globalContainer.bind<IConnectorFactory>(NAMED_OBJECTS.CONNECTOR).to(RuleEngineFactory);
