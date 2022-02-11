@@ -1,5 +1,4 @@
 import { injectable, inject } from "inversify";
-import * as knx from 'knx';
 import { ConnectorConfig, ValueGroup, SubValue } from '../../value';
 import { ConfigService } from '../../services/configservice';
 import { NetvarValueConfig as NetvarValueConfig } from './netvarvalueconfig';
@@ -78,7 +77,7 @@ export class NetvarConnector implements IConnector {
         valueGroup.values[subValue].changed(async (value: any) => {
           that.setValue(netvarsub, valueGroup, subValue as SubValue, value);
           return true; //TODO: currently we don't have any means to check if setValue worked
-        }, this.name);
+        }, that.name);
       }
     }
   }
@@ -102,9 +101,14 @@ export class NetvarConnector implements IConnector {
     let dataObj: any = {};
     that.values
 
+    let idx=0;
     for (let i=0; i<that.values.length; i++) {
       let value = that.values[i].valueGroup.fullname;
-      let idx = that.values[i].config.index;
+      if (that.values[i].config.index) {
+	idx = that.values[i].config.index;
+      } else {
+	idx = idx+1;
+      }
       let ty = undefined;
       switch(that.values[i].config.type.toUpperCase()) {
         case 'BOOLEAN': dataObj[value] = t.boolean(idx); break;
@@ -116,22 +120,33 @@ export class NetvarConnector implements IConnector {
         case 'TIME': dataObj[value] = t.time(idx); break;
         case 'REAL': dataObj[value] = t.real(idx); break;
         case 'LREAL': dataObj[value] = t.lReal(idx); break;
+	default: 
+          that.log.log(LogLevel.error, `ERROR: the type ${that.values[i].config} does not exist`);
+		break;
       }
     }
 
+    that.log.log(LogLevel.debug, `connecting UDP Network Variable list ${that.netvarconfig.ip}, port ${that.netvarconfig.port}`);
     that.connection = client(that.netvarconfig.ip, that.netvarconfig.port);
     that.list = that.connection.openList(
       {listId: 1,
         onChange: (name, value) => {
-          console.log(`netvar value changed: ${name}: ${value}`);
+          that.log.log(LogLevel.debug, `netvar value changed: ${name}: ${value}`);
           if (name in values) {
-            values[name].values['targetValue'].setValue(value, this.name);
+            values[name].values['actualValue'].setValue(value, that.name);
           }
         },
         cyclic: true,
         cycleInterval: 2000,
       },
       dataObj
-    )
+    );
+    that.log.log(LogLevel.debug, `added netvar list ${JSON.stringify(dataObj)}`);
+    that.log.log(LogLevel.info, `Connector '${that.name}': ${colors.green('connected')}`);
+
+    for (let i=0; i<that.values.length; i++) {
+      let varname = that.values[i].valueGroup.fullname;
+      that.values[i].valueGroup.values['actualValue'].setValue(that.list.get(varname), that.name);
+    }
   }
 }
