@@ -57,7 +57,7 @@
     "log-driver": "^1.2.7",
     "moment": "^2.29.1",
     "mqtt": "^4.2.8",
-    "netvar": "^1.0.7",
+    "netvar": "github:DAmesberger/netvar",
     "node-cron": "^3.0.0",
     "node-red": "^2.1.4",
     "node-red-contrib-typescript-node": "^0.1.0",

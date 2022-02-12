@@ -76,7 +76,7 @@ the type is one of the CoDeSys variable types:
 -  STRING
 -  WSTRING
 -  BYTE
--  DWORE
+-  DWORD
 -  TIME
 -  REAL
 -  LREAL
