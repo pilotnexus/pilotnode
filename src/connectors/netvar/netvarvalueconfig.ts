@@ -6,7 +6,7 @@ export enum NetvarType {
   STRING,
   WSTRING,
   BYTE,
-  DWORE,
+  DWORD,
   TIME,
   REAL,
   LREAL
