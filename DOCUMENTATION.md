@@ -44,7 +44,8 @@ There are a number of predefined available connectors
 
 Watching a local file for changes:
 ```
-teststr:
+values:
+  teststr:
     properties:
       datatype: string
     bindings:
@@ -64,6 +65,20 @@ If you only want to watch changes made to the file, do not specify `watchfile`.
 ### MQTT
 
 ### Netvar
+
+#### Connector Parameters
+
+```
+connectors:
+ - name: netvar
+    type: netvar
+    config:
+      ip: 192.168.1.2
+```
+
+Default Port is 1202
+
+#### Value Binding
 
 Netvars bindings require two paramerters:
 - index

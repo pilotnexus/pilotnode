@@ -50,7 +50,7 @@
       "name": "Debug TypeScript in Node.js",
       "preLaunchTask": "typescript",
       "program": "${workspaceFolder}/src/app.ts",
-      //"args": ["-d", "${workspaceFolder}/testconfig/"],
+      "args": ["-d"],
       "cwd": "${workspaceFolder}",
       "protocol": "inspector",
       "outFiles": [

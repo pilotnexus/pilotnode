@@ -31,7 +31,7 @@ export class FileService {
       }
 
       if (file.access[SubValue.targetValue]?.write) {
-        let writer = await FileService.getWriter(file, valueGroup.values[SubValue.targetValue]);
+        let writer = await FileService.getWriter(null, file, valueGroup.values[SubValue.targetValue], that.logService);
         valueGroup.values[SubValue.targetValue].changed(async (value) => {
           if (writer && typeof value !== 'undefined') {
             let valuedata = (typeof value === "boolean") ? (value === true ? "1" : "0") : value.toString();
@@ -85,21 +85,49 @@ export class FileService {
     });
   }
 
-  public static getWriter(file: IFileValueConfig, v: Value): ((value: string) => Promise<boolean>) | null  {
-    let writefile = file.file;
-    if (file.writefile != null && file.writefile !== "") {
-      //juggling check for undefined and null
-      writefile = file.writefile;
+  /// if fd is null, the file is opened and written to,
+  /// otherwise it is assumed that fd points to an open file
+  /// with write permissions
+  public static getWriter(fd: number | null, file: IFileValueConfig, v: Value, log: LoggingService): ((value: string) => Promise<boolean>) | null  {
+    let writefile: string;
+    let use_fd = (typeof fd !== 'undefined' && fd != null);
 
+    //if writefile is defined
+    if (file.writefile && file.writefile !== "") {
+      if (file.writefile != file.file) { //writefile differs from file
+        use_fd = false; //if the filenames are different, don't use the fd
+        // since it points fo file.file.
+        log.log(LogLevel.debug, `writefile is ${file.writefile} and file set to ${file.file}. We are not using the file descriptor for writing. File is opened and closed every time data is written.`);
+      }
+      writefile = file.writefile;
+    } else { //otherwise always use filename
+      writefile = file.file;
+    }
+
+    const boolcheck = (value: any): any => {
+      if (v.properties.isBoolean()) {
+        if (value === 'true' || value === 'on' || value === '1' || value === 'enable') {
+          return '1';
+        } else {
+          return '0';
+        }
+      }
+    }
+
+    if (use_fd && fd) {
       return async (value) => {
         try {
-          if (v.properties.isBoolean()) {
-            if (value === 'true' || value === 'on' || value === '1' || value === 'enable') {
-              value = '1';
-            } else {
-              value = '0';
-            }
-          }
+          await fse.write(fd, value);
+        }
+        catch (e) {
+          console.log(e);
+          return false;
+        }
+        return true;
+      }
+    } else {
+      return async (value) => {
+        try {
           await fse.writeFile(writefile, value, { encoding: "utf8" });
         }
         catch (e) {
@@ -109,8 +137,6 @@ export class FileService {
         return true;
       }
     }
-
-    return null;
 
     /*
     let counter = 0;

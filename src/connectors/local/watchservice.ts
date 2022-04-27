@@ -12,15 +12,18 @@ export class WatchService {
 
   async add(w: WatchValueConfig, valueGroup: ValueGroup): Promise<WatchValueConfig> {
     let that = this;
+
+    let fd: number|null = null;
     try {
       if (w.epoll) {
-        await that.epoll(w, valueGroup, that.terminationFunctions);
+        fd = await fse.open(w.file, 'w+');
+        await that.epoll(fd, w, valueGroup, that.terminationFunctions);
       } else {
         await that.watch(w, valueGroup, that.terminationFunctions);
       }
 
       if (w.access[SubValue.targetValue]?.write) {
-        let writer = await FileService.getWriter(w, valueGroup.values[SubValue.targetValue]);
+        let writer = await FileService.getWriter(fd, w, valueGroup.values[SubValue.targetValue], that.logService);
         valueGroup.values[SubValue.targetValue].changed( async (value) => {
           if (writer && typeof value !== 'undefined') {
             return await writer(value.toString());
@@ -71,10 +74,9 @@ export class WatchService {
     }
   }
 
-  private async epoll(w: WatchValueConfig, valueGroup: ValueGroup, terminationFunctions: any[]) {
+  private async epoll(valuefd: number, w: WatchValueConfig, valueGroup: ValueGroup, terminationFunctions: any[]) {
     let that = this;
       try {
-        let valuefd = await fse.open(w.file, 'w+');
         w.data = Buffer.from("          ");
         that.logService.log(LogLevel.debug, `creating poller for ${w.file}`);
         let poller = new epoll.Epoll((err: string, fd: number, events: any) => {
