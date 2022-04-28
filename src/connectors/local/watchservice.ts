@@ -104,9 +104,13 @@ export class WatchService {
           valueGroup.values[SubValue.targetValue].setValue(value, "__local.WatchService");
           valueGroup.values[SubValue.actualValue].setValue(value, "__local.WatchService");
         });
-        //await fse.write(valuefd, "S");
-        await fse.read(valuefd, w.data, 0, 10, 0);
+        let {bytesRead, buffer} = await fse.read(valuefd, w.data, 0, 10, 0);
         poller.add(valuefd, epoll.Epoll.EPOLLIN);
+
+        //write value
+        let value = buffer.toString('ascii', 0, bytesRead);
+        valueGroup.values[SubValue.targetValue].setValue(value, "__local.WatchService");
+        valueGroup.values[SubValue.actualValue].setValue(value, "__local.WatchService");
 
         terminationFunctions.push(
           () => {
