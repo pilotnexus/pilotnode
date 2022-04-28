@@ -183,7 +183,7 @@ export class DeepstreamConnector implements IConnector {
 
       //only set record value when read is enabled (read from values that is)
       if (dsValueConfig.access[subValue].read) {
-        valueGroup.values[subValue].changed((value: any) => {
+        valueGroup.values[subValue].changed((value: any, oldvalue: any) => {
           return that.getRecord(dsValueConfig, valueGroup).set(subValue, value);
         }, that.name);
       }

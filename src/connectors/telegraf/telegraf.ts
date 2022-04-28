@@ -89,7 +89,7 @@ export class TelegrafConnector implements IConnector {
     let that = this;
     let telegraf = new TelegrafValueConfig(config);
     for (let subValue in val.values) {
-      val.values[subValue].changed(async (value: any) => {
+      val.values[subValue].changed(async (value: any, oldvalue: any) => {
         if (that.client) {
           if (isNaN(value)) {
             if (typeof value === 'string') {

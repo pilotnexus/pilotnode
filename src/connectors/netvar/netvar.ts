@@ -47,8 +47,8 @@ export class NetvarConnector implements IConnector {
     openList: <T extends {
       [k: string]: Types;
     }>(options: Options, vars: T) => {
-      set: <K extends keyof T>(name: K, value: T[K]["value"]) => boolean;
-      setMore: (set: { [K_1 in keyof T]?: T[K_1]["value"] | undefined; }) => boolean;
+      set: <K extends keyof T>(name: K, value: T[K]["value"]) => void; //boolean;
+      setMore: (set: { [K_1 in keyof T]?: T[K_1]["value"] | undefined; }) => void; //boolean;
       get: <K_2 extends keyof T>(name: K_2) => T[K_2]["value"] | undefined;
       definition: string;
       dispose: () => void;
@@ -76,7 +76,7 @@ export class NetvarConnector implements IConnector {
 
     for (let subValue in valueGroup.values) {
       if (netvarsub.access[subValue]?.write) {
-        valueGroup.values[subValue].changed(async (value: any) => {
+        valueGroup.values[subValue].changed(async (value: any, oldvalue: any) => {
           that.setValue(netvarsub, valueGroup, subValue as SubValue, value);
           return true; //TODO: currently we don't have any means to check if setValue worked
         }, that.name);
@@ -123,7 +123,7 @@ export class NetvarConnector implements IConnector {
         case 'STRING': dataObj[value] = t.string(idx); break;
         case 'WSTRING': dataObj[value] = t.wString(idx); break;
         case 'BYTE': dataObj[value] = t.byte(idx); break;
-        case 'DWORD': dataObj[value] = t.dWord(idx); break;
+        //case 'DWORD': dataObj[value] = t.dWord(idx); break;
         case 'TIME': dataObj[value] = t.time(idx); break;
         case 'REAL': dataObj[value] = t.real(idx); break;
         case 'LREAL': dataObj[value] = t.lReal(idx); break;

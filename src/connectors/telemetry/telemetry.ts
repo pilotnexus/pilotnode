@@ -128,7 +128,7 @@ export class TelemetryConnector implements IConnector {
 
         for (let subValue in val.values) {
           if (subValue in ruleValueConfig.map) {
-            val.values[subValue].changed( async (value: any) => {
+            val.values[subValue].changed( async (value: any, oldvalue: any) => {
               let result = await this.telemetry?.sendTelemetryData(this.telemetryValues[val.fullNameWithNodeId].accesstoken, 
                 Date.now(),
                 this.telemetryValues[val.fullNameWithNodeId].map[subValue],

@@ -42,7 +42,7 @@ export class Value {
   private value: any;
   private parent: ValueGroup;
   private subValue: SubValue;
-  private handlers: {[name: string]: { (data?: any): Promise<boolean>; }} = {};
+  private handlers: {[name: string]: { (value?: any, oldvalue?: any): Promise<boolean>; }} = {};
   private resolvers: ((value?: any) => void)[] = [];
 
   public properties: ValueProperties;
@@ -53,7 +53,7 @@ export class Value {
     this.properties = properties;
   }
 
-  public changed(handler: { (value?: any): Promise<boolean> }, handle: string) : void {
+  public changed(handler: { (value?: any, oldvalue?: any): Promise<boolean> }, handle: string) : void {
     this.handlers[handle] = handler;
   }
 
@@ -110,11 +110,12 @@ export class Value {
         that.parent.values[SubValue.lastChanged].setValue(new Date(), "");
       }
       // console.log(`setting value of ${this.parent.fullname} (${this.subValue}) ${JSON.stringify(value)}`)
+      let oldvalue = that.value;
       that.value = value;
 
       for(const handle in that.handlers) {
         if (handle !== excludeHandle) {
-          that.handlers[handle](that.value);
+          that.handlers[handle](that.value, oldvalue);
         }
       }
 

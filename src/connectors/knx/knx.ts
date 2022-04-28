@@ -90,7 +90,7 @@ export class KnxConnector implements IConnector {
 
       for (let subValue in valueGroup.values) {
       if (knxsub.access[subValue]?.write) {
-        valueGroup.values[subValue].changed(async (value: any) => {
+        valueGroup.values[subValue].changed(async (value: any, oldvalue: any) => {
           that.setValue(knxsub, valueGroup, subValue as SubValue, value);
           return true; //TODO: currently we don't have any means to check if setValue worked
         }, this.name);

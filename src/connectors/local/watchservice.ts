@@ -23,10 +23,27 @@ export class WatchService {
       }
 
       if (w.access[SubValue.targetValue]?.write) {
+        let actualValueUpdated = false;
         let writer = await FileService.getWriter(fd, w, valueGroup.values[SubValue.targetValue], that.logService);
-        valueGroup.values[SubValue.targetValue].changed( async (value) => {
+        valueGroup.values[SubValue.targetValue].changed( async (value: any, oldvalue: any) => {
           if (writer && typeof value !== 'undefined') {
-            return await writer(value.toString());
+            if (w.directwrite) {
+              valueGroup.values[SubValue.actualValue].setValue(value, "__local.WatchService");
+              actualValueUpdated = true;
+            }
+            if (await writer(value.toString())) {
+              if (!actualValueUpdated) {
+                valueGroup.values[SubValue.actualValue].setValue(value, "__local.WatchService");
+              }
+              return true;
+            } else {
+              //writing failed, set targetvalue to oldvalue so setting targetvalue
+              //again will trigger a change
+              //TODO: it is a bit unintuitive to have targetvalue revert to the old value
+              //maybe there is a better mechanism to enabe retries to set the actualvalue
+              valueGroup.values[SubValue.targetValue].setValue(oldvalue, "__local.WatchService");
+              return false;
+            }
           }
           return false;
          }, "__local.WatchService");

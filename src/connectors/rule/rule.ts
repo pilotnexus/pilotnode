@@ -118,7 +118,7 @@ export class RuleEngineConnector implements IConnector {
       if (value.fullname in facts) {
         //we need to add listener for all fact subvalues
         for (const subValue in facts[value.fullname].values) {
-          value.values[subValue].changed( async (newValue) => {
+          value.values[subValue].changed( async (newValue: any, oldValue: any) => {
             try {
             //@ts-ignore
             facts[value.fullname].values[subValue] = newValue;

@@ -31,13 +31,28 @@ export class FileService {
       }
 
       if (file.access[SubValue.targetValue]?.write) {
+        let actualValueUpdated = false;
         let writer = await FileService.getWriter(null, file, valueGroup.values[SubValue.targetValue], that.logService);
-        valueGroup.values[SubValue.targetValue].changed(async (value) => {
+        valueGroup.values[SubValue.targetValue].changed(async (value, oldvalue) => {
           if (writer && typeof value !== 'undefined') {
             let valuedata = (typeof value === "boolean") ? (value === true ? "1" : "0") : value.toString();
+            if (file.directwrite) {
+              valueGroup.values[SubValue.actualValue].setValue(value, "__local.FileService");
+              actualValueUpdated = true;
+            }
             if (await writer(valuedata))
             {
-              valueGroup.values[SubValue.actualValue].setValue(value, "__local.FileService");
+              if (!actualValueUpdated) {
+                valueGroup.values[SubValue.actualValue].setValue(value, "__local.FileService");
+              }
+              return true;
+            } else {
+              //writing failed, set targetvalue to oldvalue so setting targetvalue
+              //again will trigger a change
+              //TODO: it is a bit unintuitive to have targetvalue revert to the old value
+              //maybe there is a better mechanism to enabe retries to set the actualvalue
+              valueGroup.values[SubValue.targetValue].setValue(oldvalue, "__local.FileService");
+              return false;
             }
           }
           return false;
@@ -117,6 +132,7 @@ export class FileService {
     if (use_fd && fd) {
       return async (value) => {
         try {
+          value = boolcheck(value);
           await fse.write(fd, value);
         }
         catch (e) {
@@ -128,6 +144,7 @@ export class FileService {
     } else {
       return async (value) => {
         try {
+          value = boolcheck(value);
           await fse.writeFile(writefile, value, { encoding: "utf8" });
         }
         catch (e) {
