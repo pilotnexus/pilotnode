@@ -1,6 +1,6 @@
 {
   "name": "pilotnode",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "preview": true,
   "description": "Pilot Client Node",
   "keywords": [
@@ -57,7 +57,7 @@
     "log-driver": "^1.2.7",
     "moment": "^2.29.1",
     "mqtt": "^4.2.8",
-    "netvar": "github:DAmesberger/netvar#1.2.0",
+    "netvar": "github:DAmesberger/netvar#1.2.1",
     "node-cron": "^3.0.0",
     "node-red": "^2.1.4",
     "node-red-contrib-typescript-node": "^0.1.0",

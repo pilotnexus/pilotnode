@@ -22,6 +22,7 @@ class NetvarConfig {
   listId: number = 1;
   cyclic: boolean = false;
   cycleInterval: number = 2000;
+  packed: boolean = true;
   debug: boolean = false;
 
   public constructor(init?: Partial<NetvarConfig>) {
@@ -122,12 +123,13 @@ export class NetvarConnector implements IConnector {
         case 'STRING': dataObj[value] = t.string(idx); break;
         case 'WSTRING': dataObj[value] = t.wString(idx); break;
         case 'BYTE': dataObj[value] = t.byte(idx); break;
-        //case 'DWORD': dataObj[value] = t.dWord(idx); break;
+        case 'DWORD': dataObj[value] = t.dWord(idx); break;
         case 'TIME': dataObj[value] = t.time(idx); break;
         case 'REAL': dataObj[value] = t.real(idx); break;
         case 'LREAL': dataObj[value] = t.lReal(idx); break;
         default:
-          that.log.log(LogLevel.error, `ERROR: the type ${that.values[i].config} does not exist`);
+          that.log.log(LogLevel.error, `ERROR: the netvar type ${JSON.stringify(that.values[i].config.type)} does not exist.
+          possible values are: BOOLEAN, WORD, STRING, WSTRING, BYTE, DWORD, TIME, REAL, LREAL`);
           break;
 
       }
@@ -144,6 +146,7 @@ export class NetvarConnector implements IConnector {
       that.list = that.connection.openList(
         {
           listId: that.netvarconfig.listId,
+          packed: that.netvarconfig.packed,
           onChange: (name: string, value: any) => {
             //that.log.log(LogLevel.debug, `netvar value changed, connector ${that.name}, variable: ${name}, value: ${value}`);
             if (name in values) {
