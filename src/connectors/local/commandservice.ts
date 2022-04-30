@@ -19,7 +19,7 @@ export class CommandService {
       that.run(cmd, valueGroup);
     }
 
-    if (cmd.interval > 0) {
+    if (cmd.interval > 0 && !cron.validate(cmd.cron)) {
       let interval = setInterval(function() {
         that.run(cmd, valueGroup);
       }, cmd.interval);
