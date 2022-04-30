@@ -15,8 +15,7 @@ import mqtt from 'mqtt';
 var colors = require("colors/safe"); // does not alter string prototype
 class MqttConfig {
   server: string = '';
-  reconnectinterval = 30000;
-  //options: Options = DefaultOptions;
+  options: mqtt.IClientOptions | undefined;
 
   public constructor(init?: Partial<MqttConfig>) {
     // We never want to stop trying to reconnect
@@ -34,7 +33,7 @@ class MqttRec {
   public recordName: string;
   value: { [subName: string]: Value };
   config: any;
-  private readyCallbacks: { (client: mqtt.Client): void }[] = [];
+  private readyCallbacks: { (record: MqttRec): void }[] = [];
 
   constructor(valueGroup: ValueGroup, config: any, client: mqtt.Client, private logService: LoggingService) {
     let that = this;
@@ -47,7 +46,7 @@ class MqttRec {
     this.recordInitialized = false;
     this.recordName = valueGroup.nodeId + "/" + valueGroup.fullname;
     that.recordReady = true;
-    that.initRecord(client);
+    that.initRecord();
   }
 
   ///returns the full record name including nodeId
@@ -59,28 +58,27 @@ class MqttRec {
     return this.connectionReady;
   }
   /// Call when the connection is established to write pending record data
-  public setConnectionReady(client: mqtt.MqttClient) {
+  public setConnectionReady() {
     let that = this;
     that.connectionReady = true;
     if (that.recordReady) {
-      that.initRecord(client);
+      that.initRecord();
     }
   }
 
   /// called when record is ready and connection is ready to initialize data
-  public initRecord(client: mqtt.MqttClient) {
+  public initRecord() {
     let that = this;
     that.recordInitialized = true;
-    //that.record.set(SubValue.properties, that.valueGroup.properties as any);
-    that.readyCallbacks.forEach(callback => callback(that.client));
+    that.readyCallbacks.forEach(callback => callback(that));
     for (let valuekey in that.value) {
-      //that.record.set(valuekey, that.value[valuekey] as any);
+      that.set(valuekey, that.value[valuekey] as any);
     }
   }
 
-  public waitRecord(callback: (client: mqtt.Client) => void) {
+  public waitRecord(callback: (record: MqttRec) => void) {
     if (this.recordReady && this.connectionReady) {
-      callback(this.client);
+      callback(this);
     } else {
       this.readyCallbacks.push(callback);
     }
@@ -89,8 +87,8 @@ class MqttRec {
   public async set(subName: string, value: any): Promise<boolean> {
     if (this.recordReady && this.connectionReady) {
       try {
-        this.client.emit(this.recordName + '/' + subName, value);
-        //console.log(`Record set ${this.record.name}/${subName}, ${value}`);
+        this.client.publish(this.recordName + '/' + subName, JSON.stringify(value));
+        this.logService.log(LogLevel.debug, `Record set ${this.recordName}/${subName}, ${value}`);
       } catch (e) {
         this.logService.log(LogLevel.error, `ERROR setting ${this.recordName} with subvalue ${subName} to value '${value}': ${JSON.stringify(e, null, 2)}`);
       }
@@ -124,7 +122,7 @@ export class MqttConnector implements IConnector {
 
   public constructor(
     private name: string,
-    private dsconfig: MqttConfig,
+    private mqttConfig: MqttConfig,
     private config: ConfigService,
     private auth: AuthService,
     private logService: LoggingService
@@ -133,16 +131,21 @@ export class MqttConnector implements IConnector {
 
   async init() {
     let that = this;
-    let server: string = that.dsconfig.server;
+    let server: string = that.mqttConfig.server;
 
-    that.client = mqtt.connect('mqtt://test.mosquitto.org');
+    that.client = mqtt.connect(server, that.mqttConfig.options);
 
     that.client.on('connect', function () {
       that.connected = true;
       that.logService.log(
         LogLevel.info,
-        `Connector '${name}': ${colors.green("connected")}`
+        `Connector '${that.name}': ${colors.green("connected")}`
       );
+      for (let recordname in that.records) {
+        if (!that.records[recordname].isConnectionReady()) {
+          that.records[recordname].setConnectionReady() ;
+        }
+      }
     });
     
 
@@ -192,7 +195,7 @@ export class MqttConnector implements IConnector {
         that.logService
       );
       if (that.connected) {
-        that.records[valueGroup.fullNameWithNodeId].setConnectionReady(that.client as mqtt.Client);
+        that.records[valueGroup.fullNameWithNodeId].setConnectionReady();
       }
     }
     return that.records[valueGroup.fullNameWithNodeId];
@@ -220,7 +223,7 @@ export class MqttConnector implements IConnector {
 
         let rec = that.getRecord(dsValueConfig, valueGroup);
         that.client?.on(rec.recordName, async function (topic: any, value: any) {
-              await valueGroup.values[subValue].setValue(value, that.name);
+              await valueGroup.values[subValue].setValue(JSON.parse(value), that.name);
               that.logService.log(
                 LogLevel.debug,
                 `Target value of ${rec.recordName} (${subValue}) changed to ${value}`
@@ -234,8 +237,8 @@ export class MqttConnector implements IConnector {
       //set initial state for all defined sub Values
       let value = valueGroup.values[subValue].getValue();
       if (typeof value !== 'undefined') {
-        //that.getRecord(dsValueConfig, valueGroup)
-        //  .waitRecord(record => record.set(subValue, value));
+        that.getRecord(dsValueConfig, valueGroup)
+          .waitRecord(record => record.set(subValue, value));
       }
 
       //only set record value when read is enabled (read from values that is)
