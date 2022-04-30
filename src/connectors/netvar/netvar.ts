@@ -18,9 +18,11 @@ var colors = require('colors/safe'); // does not alter string prototype
 class NetvarConfig {
   ip: string = '';
   port: number = 1202;
+  send_port: number = 1202;
   listId: number = 1;
   cyclic: boolean = false;
   cycleInterval: number = 2000;
+  debug: boolean = false;
 
   public constructor(init?: Partial<NetvarConfig>) {
     Object.assign(this, init);
@@ -47,8 +49,8 @@ export class NetvarConnector implements IConnector {
     openList: <T extends {
       [k: string]: Types;
     }>(options: Options, vars: T) => {
-      set: <K extends keyof T>(name: K, value: T[K]["value"]) => void; //boolean;
-      setMore: (set: { [K_1 in keyof T]?: T[K_1]["value"] | undefined; }) => void; //boolean;
+      set: <K extends keyof T>(name: K, value: T[K]["value"]) => boolean;
+      setMore: (set: { [K_1 in keyof T]?: T[K_1]["value"] | undefined; }) => boolean;
       get: <K_2 extends keyof T>(name: K_2) => T[K_2]["value"] | undefined;
       definition: string;
       dispose: () => void;
@@ -86,14 +88,11 @@ export class NetvarConnector implements IConnector {
 
   setValue(config: ConnectorConfig, val: ValueGroup, subValue: SubValue, value: any) {
     let that = this;
-    let netvarValueConfig = config as NetvarValueConfig;
 
      that.log.log(LogLevel.debug, `trying to set netvar value, connector ${that.name}, variable: ${val.fullname}, value: ${value}`);
     if (that.connection && that.list && subValue === SubValue.targetValue) {
       if (that.list.set(val.fullname, value)) {
-
         that.log.log(LogLevel.debug, `netvar value set, connector ${that.name}, variable: ${val.fullname}, value: ${value}`);
-        val.values[SubValue.actualValue].setValue(value, that.name);
       }
     }
   }
@@ -135,7 +134,12 @@ export class NetvarConnector implements IConnector {
     }
 
     that.log.log(LogLevel.debug, `connecting UDP Network Variable list ${that.netvarconfig.ip}, port ${that.netvarconfig.port}`);
-    that.connection = client(that.netvarconfig.ip, that.netvarconfig.port);
+    that.connection = client(that.netvarconfig.ip, 
+      { 
+        port: that.netvarconfig.port,
+        send_port: that.netvarconfig.send_port,
+        debug: that.netvarconfig.debug
+      });
     if (that.connection) {
       that.list = that.connection.openList(
         {
