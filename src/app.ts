@@ -86,7 +86,7 @@ program
     process.exit(await Helper.removeService());
   });
 
-program.version('0.4.9'); //TODO, unify with package.json?
+program.version('0.5.0'); //TODO, unify with package.json?
 program.parse(process.argv);
 
 

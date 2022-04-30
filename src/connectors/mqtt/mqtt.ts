@@ -11,6 +11,7 @@ import { validateOrReject } from "class-validator";
 import { DH_UNABLE_TO_CHECK_GENERATOR } from "constants";
 import { CONNECTION_STATE } from "@deepstream/client/dist/src/constants";
 import mqtt from 'mqtt';
+import { client } from "netvar";
 
 var colors = require("colors/safe"); // does not alter string prototype
 class MqttConfig {
@@ -20,12 +21,12 @@ class MqttConfig {
   public constructor(init?: Partial<MqttConfig>) {
     // We never want to stop trying to reconnect
 
-      Object.assign(this, init);
+    Object.assign(this, init);
   }
 }
 
 class MqttRec {
-  private valueGroup: ValueGroup;
+  public valueGroup: ValueGroup;
   private client: mqtt.MqttClient;
   private recordReady: boolean;
   private connectionReady: boolean;
@@ -143,21 +144,10 @@ export class MqttConnector implements IConnector {
       );
       for (let recordname in that.records) {
         if (!that.records[recordname].isConnectionReady()) {
-          that.records[recordname].setConnectionReady() ;
+          that.records[recordname].setConnectionReady();
         }
       }
     });
-    
-
-    // Login
-    //let auth = {};
-    //let token = await that.auth.token();
-    //if (token) {
-    //  auth = {
-    //    token,
-    //    nodeid: this.config.config.nodeid
-    //  };
-    //}
 
     that.client.on("error", function (msg: string, event: string, topic: string) {
       that.logService.log(
@@ -166,13 +156,29 @@ export class MqttConnector implements IConnector {
       );
     });
 
-    //that.client.login(auth, async function (success: boolean, data: any) {
-    //  if (success) {
-    //    //that.provideRpcs(that.config.nodeid, that.client, { osinfo: that.sbcservice.staticOsInfoObject} );
-    //  } else {
-    //    that.logService.log(LogLevel.error, "Connection to Deepstream Server failed");
-    //  }
-    //});
+    that.client.handleMessage = (packet: mqtt.Packet, callback) => {
+      let handled = false;
+      if ('topic' in packet && 'payload' in packet) {
+        try {
+          let idx = packet.topic.lastIndexOf('/');
+          if (idx != -1) {
+            let name = packet.topic.substring(0, idx);
+            let subValue = packet.topic.substring(idx + 1);
+            if (name in that.records && subValue in that.records[name].valueGroup.values) {
+              let rec = that.records[name].valueGroup.values[subValue];
+              let value = JSON.parse(packet.payload.toString());
+              rec.setValue(value, that.name);
+              handled = true;
+              LogLevel.debug,
+                `Target value of ${name} (${subValue}) changed to ${value}`
+            }
+          }
+        }
+        catch { }
+      }
+
+      callback(); //TODO, use handled and set error accordingly
+    };
 
     return async () => {
       if (that.client) {
@@ -222,16 +228,15 @@ export class MqttConnector implements IConnector {
         }
 
         let rec = that.getRecord(dsValueConfig, valueGroup);
-        that.client?.on(rec.recordName, async function (topic: any, value: any) {
-              await valueGroup.values[subValue].setValue(JSON.parse(value), that.name);
-              that.logService.log(
-                LogLevel.debug,
-                `Target value of ${rec.recordName} (${subValue}) changed to ${value}`
-              );
-            },
-          );
-        };
+        let topic = `${rec.recordName}/${subValue}`;
+        that.client?.subscribe(topic, async function (err: any, topic: any) {
+          if (err) {
+            that.logService.log(LogLevel.error, `Cannot subscribe to topic ${topic}`);
+            that.logService.log(LogLevel.error, JSON.stringify(err));
+          }
+        });
       }
+    }
 
     for (let subValue in valueGroup.values) {
       //set initial state for all defined sub Values
