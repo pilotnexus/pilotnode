@@ -126,6 +126,8 @@ export class FileService {
         } else {
           return '0';
         }
+      } else {
+	return value;
       }
     }
 
