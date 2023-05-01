@@ -16,7 +16,7 @@ export class SerialService {
   public async add(sub: SerialValueConfig, valueGroup: ValueGroup) : Promise<SerialValueConfig> {
     let that = this;
     let baudrate = Number(sub.baudrate);
-    if (baudrate === NaN || baudrate === 0) {
+    if (Number.isNaN(baudrate) || baudrate === 0) {
       baudrate = 9600;
     }
 
