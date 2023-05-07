@@ -242,8 +242,8 @@ export class ValueGroup {
     }
 
     if (idx !== -1) {
-      this.path = this.fullname.substr(0, idx);
-      this.name = this.fullname.substr(idx+1);
+      this.path = this.fullname.substring(0, idx);
+      this.name = this.fullname.substring(idx+1);
     } else {
       this.path = '';
       this.name = this.fullname;

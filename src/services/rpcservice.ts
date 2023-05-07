@@ -47,13 +47,13 @@ export class RpcService {
     let params: string[] = [];
     if (paramsIndex > 0) {
       if (method.endsWith(')')) {
-        let tmpparams = method.substr(paramsIndex + 1, method.length-paramsIndex-2).trim()
+        let tmpparams = method.substring(paramsIndex + 1, method.length - 1).trim()
         if (tmpparams) {
           params = tmpparams.split(',').map(p => p.trim());
         } else {
           params = [];
         }
-        method = method.substr(0,paramsIndex);
+        method = method.substring(0,paramsIndex);
       } else {
         return {method: "", params: []}; //invalid function signature
       }

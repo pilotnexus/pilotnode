@@ -116,7 +116,7 @@ export class RosConnector implements IConnector {
       let sub = filtered[0];
 
       let varPath: (string | number)[] = [];
-      let objPath = config[subValue].substr(sub.topic.length + 1);
+      let objPath = config[subValue].substring(sub.topic.length + 1);
       let result = objPath.match(/(\[\d+\]|[^\.\[\]]+)/gm);
       if (result) {
         for (let i = 0; i < result.length; i++) {

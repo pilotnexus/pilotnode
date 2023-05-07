@@ -36,7 +36,7 @@ export class RuleValueConfig extends ConnectorConfig {
                   obj.path = `.${SubValue.actualValue}`;
                 }
                 let path = obj.fact.replace(/\./g, "/");
-                let subValue = obj.path[0] === '.' ? obj.path.substr(1) : obj.path;
+                let subValue = obj.path[0] === '.' ? obj.path.substring(1) : obj.path;
                 this.facts.push({path, subValue});
               }
             }
