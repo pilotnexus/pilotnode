@@ -133,12 +133,13 @@ export class WatchService {
     private async epoll(w: WatchValueConfig, valueGroup: ValueGroup, terminationFunctions: any[]) {
         let that = this;
         let fd: number | null = null;
+        let poller: any | null = null;
         for (let i = 0; i < w.readretry; i++) {
             try {
                 fd = await fs.open(w.file, 'w+');
                 w.data = Buffer.from("          ");
                 that.logService.log(LogLevel.debug, `creating poller for ${w.file}`);
-                let poller = new epoll.Epoll((err: string, fd: number, events: any) => {
+                poller = new epoll.Epoll((_err: string, fd: number, _events: any) => {
                     that.logService.log(LogLevel.debug, `epoll event fired for ${w.file}`);
                     // Read GPIO value file. Reading also clears the interrupt.
                     let bytesRead = fs.readSync(fd, w.data, 0, 10, 0);
@@ -157,11 +158,25 @@ export class WatchService {
                 terminationFunctions.push(
                     () => {
                         poller.remove(fd);
+                        if (fd != null) {
+                            fs.closeSync(fd);
+                        }
                         that.logService.log(LogLevel.debug, `removed ${valueGroup.fullname} epoll`);
                     });
                 break;
             }
             catch (e) {
+                try {
+                    poller.remove(fd);
+                }
+                catch { }
+                try {
+                    if (fd != null) {
+                        fs.closeSync(fd);
+                    }
+                }
+                catch { }
+
                 if (i === w.readretry - 1) {
                     that.logService.log(LogLevel.error, `error while reading watched epoll file ${w.file}`);
                     that.logService.log(LogLevel.error, e);
