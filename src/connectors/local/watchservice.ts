@@ -20,10 +20,9 @@ export class WatchService {
         try {
             if (w.epoll) {
                 await that.check_plc_subscribe(w.file);
-                fd = await fs.open(w.file, 'w+');
-                await that.epoll(fd, w, valueGroup, that.terminationFunctions);
+                fd = await that.epoll(w, valueGroup, that.terminationFunctions);
             } else {
-                await that.watch(w, valueGroup, that.terminationFunctions);
+                fd = await that.watch(w, valueGroup, that.terminationFunctions);
             }
 
             if (w.access[SubValue.targetValue]?.write) {
@@ -121,43 +120,55 @@ export class WatchService {
                 watcher.close();
                 that.logService.log(LogLevel.debug, `removed ${valueGroup.fullname} watcher`);
             });
+
+            return await fs.open(w.file, 'w+');
         }
         catch (e) {
             that.logService.log(LogLevel.error, `error while reading watched file ${w.file}`);
             that.logService.log(LogLevel.error, e);
         }
+        return null;
     }
 
-    private async epoll(valuefd: number, w: WatchValueConfig, valueGroup: ValueGroup, terminationFunctions: any[]) {
+    private async epoll(w: WatchValueConfig, valueGroup: ValueGroup, terminationFunctions: any[]) {
         let that = this;
-        try {
-            w.data = Buffer.from("          ");
-            that.logService.log(LogLevel.debug, `creating poller for ${w.file}`);
-            let poller = new epoll.Epoll((err: string, fd: number, events: any) => {
-                that.logService.log(LogLevel.debug, `epoll event fired for ${w.file}`);
-                // Read GPIO value file. Reading also clears the interrupt.
-                let bytesRead = fs.readSync(fd, w.data, 0, 10, 0);
-                let value = w.data.toString('ascii', 0, bytesRead);
+        let fd: number | null = null;
+        for (let i = 0; i < w.readretry; i++) {
+            try {
+                fd = await fs.open(w.file, 'w+');
+                w.data = Buffer.from("          ");
+                that.logService.log(LogLevel.debug, `creating poller for ${w.file}`);
+                let poller = new epoll.Epoll((err: string, fd: number, events: any) => {
+                    that.logService.log(LogLevel.debug, `epoll event fired for ${w.file}`);
+                    // Read GPIO value file. Reading also clears the interrupt.
+                    let bytesRead = fs.readSync(fd, w.data, 0, 10, 0);
+                    let value = w.data.toString('ascii', 0, bytesRead);
+                    valueGroup.values[SubValue.targetValue].setValue(value, "__local.WatchService");
+                    valueGroup.values[SubValue.actualValue].setValue(value, "__local.WatchService");
+                });
+                let { bytesRead, buffer } = await fs.read(fd, w.data, 0, 10, 0);
+                poller.add(fd, epoll.Epoll.EPOLLIN);
+
+                //write value
+                let value = buffer.toString('ascii', 0, bytesRead);
                 valueGroup.values[SubValue.targetValue].setValue(value, "__local.WatchService");
                 valueGroup.values[SubValue.actualValue].setValue(value, "__local.WatchService");
-            });
-            let { bytesRead, buffer } = await fs.read(valuefd, w.data, 0, 10, 0);
-            poller.add(valuefd, epoll.Epoll.EPOLLIN);
 
-            //write value
-            let value = buffer.toString('ascii', 0, bytesRead);
-            valueGroup.values[SubValue.targetValue].setValue(value, "__local.WatchService");
-            valueGroup.values[SubValue.actualValue].setValue(value, "__local.WatchService");
-
-            terminationFunctions.push(
-                () => {
-                    poller.remove(valuefd);
-                    that.logService.log(LogLevel.debug, `removed ${valueGroup.fullname} epoll`);
-                });
+                terminationFunctions.push(
+                    () => {
+                        poller.remove(fd);
+                        that.logService.log(LogLevel.debug, `removed ${valueGroup.fullname} epoll`);
+                    });
+                break;
+            }
+            catch (e) {
+                if (i === w.readretry - 1) {
+                    that.logService.log(LogLevel.error, `error while reading watched epoll file ${w.file}`);
+                    that.logService.log(LogLevel.error, e);
+                } else {
+                }
+            }
         }
-        catch (e) {
-            that.logService.log(LogLevel.error, `error while reading watched file ${w.file}`);
-            that.logService.log(LogLevel.error, e);
-        }
+        return fd;
     }
 }

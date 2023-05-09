@@ -25,7 +25,6 @@ import * as red from "node-red";
 import express from 'express';
 import http from 'http';
 import cors from 'cors';
-import json from 'body-parser';
 
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
@@ -178,7 +177,7 @@ export class ServerConnector implements IConnector {
         await server.start();
         app.use('/graphql',
             cors<cors.CorsRequest>(),
-            json(),
+            express.json(),
             expressMiddleware(server)
         );
 
