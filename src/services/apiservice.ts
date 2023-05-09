@@ -3,7 +3,6 @@ import { AuthService } from "./authservice.js";
 import { ConfigService } from "./configservice.js";
 
 import { ApolloClient, InMemoryCache, split, HttpLink, gql } from '@apollo/client/core/index.js';
-//const { ApolloClient, InMemoryCache, split, HttpLink, gql, NormalizedCacheObject } = require('@apollo/client');
 import type { ApolloClient as ApolloClientType } from '@apollo/client';
 import type { NormalizedCacheObject } from '@apollo/client/cache';
 
@@ -15,6 +14,7 @@ import { LoggingService, LogLevel } from "./loggingservice.js";
 import { RpcService } from "./rpcservice.js";
 import { GraphQLWsLink } from '@apollo/client/link/subscriptions/index.js';
 import { createClient } from "graphql-ws";
+import { WebSocket } from 'ws';
 
 interface IActivity {
     id: number;
@@ -58,6 +58,7 @@ export class ApiService {
 
                 const wsLink = new GraphQLWsLink(createClient({
                     url: that.configService.config.pilotapiws,
+                    webSocketImpl: WebSocket
                     //headers TODO
                 }));
 
