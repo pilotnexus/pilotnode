@@ -6,7 +6,7 @@ import "reflect-metadata";
 import { TokenSet } from "openid-client";
 import { LoggingService, LogLevel } from "./loggingservice.js";
 import path from 'path';
-import * as Joi from 'joi';
+import Joi from 'joi';
 import { v4 as uuid_v4 } from 'uuid';
 import { globalContainer } from "../inversify.config.js";
 import { IConnectorValidator } from "../connector_validators/connectorvalidator.js";
