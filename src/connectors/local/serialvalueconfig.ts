@@ -7,6 +7,7 @@ export class SerialValueConfig extends LocalConfig {
     databits: number = 8;
     stopbits: number = 1;
     parity: Parity = Parity.None;
+    delimiter: string = '\n';
 
     public constructor(init?: Partial<SerialValueConfig>) {
         super();

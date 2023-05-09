@@ -80,7 +80,10 @@ export class LocalConnector implements IConnector {
             this.log,
             this.terminationFunctions
         );
-        this.serialService = new SerialService(config.config.nodeid);
+        this.serialService = new SerialService(
+            config.config.nodeid,
+            this.log,
+            this.terminationFunctions);
         this.emulationService = new EmulationService();
         this.sbcService = new SbcService(
             config.config.nodeid,
@@ -147,7 +150,7 @@ export class LocalConnector implements IConnector {
                     that.emulationService.add(new EmulationValueConfig(sub), valueGroup);
                     break;
                 case "serial":
-                    //await that.serialService.add(new SerialValueConfig(sub));
+                    await that.serialService.add(new SerialValueConfig(sub), valueGroup);
                     break;
                 default:
                     this.log.log(

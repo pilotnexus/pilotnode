@@ -1,15 +1,15 @@
 import { SerialValueConfig } from './serialvalueconfig';
-import { ValueGroup, SubValue } from '../../value';
+import { ValueGroup, SubValue } from '../../value.js';
+import { LoggingService, LogLevel } from '../../services/loggingservice.js';
 
-//import { SerialPort } from 'serialport';
+import { SerialPort } from 'serialport';
+import { DelimiterParser } from '@serialport/parser-delimiter';
 
 export class SerialService {
 
-    nodeid: string;
     ports: { [name: string]: any };
 
-    constructor(nodeid: string) {
-        this.nodeid = nodeid;
+    constructor(private nodeid: string, private logService: LoggingService, private terminationFunctions: any[]) {
         this.ports = {};
     }
 
@@ -20,25 +20,33 @@ export class SerialService {
             baudrate = 9600;
         }
 
-        // try {
-        //     that.ports[valueGroup.fullname] = new SerialPort({
-        //         path: sub.port,
-        //         baudRate: baudrate
-        //     });
-        //     that.ports[valueGroup.fullname].on('readable', function() {
-        //         valueGroup.values[SubValue.actualValue].setValue(that.ports[valueGroup.fullname].read(), "__local.SerialService");
-        //     });
-        //     /*
-        //     sub.callbacks.push({'vr': (value) => {
-        //       that.ports[sub.name].write(value)
-        //       }
-        //     });
-        //    */
-        // }
-        // catch (e) {
-        //     //console.error(`Could not create serialport subscription ${sub.name}`);
-        //     console.error(e);
-        // }
+        try {
+            that.ports[valueGroup.fullname] = new SerialPort({
+                path: sub.port,
+                baudRate: baudrate
+            });
+            that.ports[valueGroup.fullname].on('readable', function() {
+                valueGroup.values[SubValue.actualValue].setValue(that.ports[valueGroup.fullname].read(), "__local.SerialService");
+            });
+
+            const parser = that.ports[valueGroup.fullname].pipe(new DelimiterParser({ delimiter: sub.delimiter }));
+            parser.on('data', (value) => {
+                valueGroup.values[SubValue.actualValue].setValue(value, "__local.WatchService");
+            });
+
+            //write to serial port
+            if (sub.access[SubValue.targetValue]?.write) {
+                valueGroup.values[SubValue.targetValue].changed(async (value, oldvalue) => {
+                    that.ports[valueGroup.fullname].write(value + sub.delimiter);
+                    return true;
+                }, "__local.SerialService");
+            }
+
+        }
+        catch (e) {
+            //console.error(`Could not create serialport subscription ${sub.name}`);
+            console.error(e);
+        }
         return sub;
     }
 }
