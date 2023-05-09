@@ -1,10 +1,11 @@
 import fs from "fs-extra";
+import path from 'path';
+import epoll from 'epoll';
 import { WatchValueConfig } from './watchvalueconfig.js';
 import { ValueGroup, SubValue } from '../../value.js';
 import { LoggingService, LogLevel } from '../../services/loggingservice.js';
 import { FileService } from './fileservice.js';
-import epoll from 'epoll';
-
+import { getBasedir } from '../../folders.js';
 export class WatchService {
 
     constructor(private nodeid: string, private logService: LoggingService, private terminationFunctions: any[]) {
@@ -16,6 +17,7 @@ export class WatchService {
         let fd: number | null = null;
         try {
             if (w.epoll) {
+                await that.check_plc_subscribe(w.file);
                 fd = await fs.open(w.file, 'w+');
                 await that.epoll(fd, w, valueGroup, that.terminationFunctions);
             } else {
@@ -55,6 +57,31 @@ export class WatchService {
         }
 
         return w;
+    }
+
+    private async check_plc_subscribe(file: string) {
+        let that = this;
+        try {
+            if (file.startsWith(path.join(getBasedir(), 'plc/variables')) && file.endsWith('value')) {
+                that.logService.log(LogLevel.debug, `plc variable file ${file} detected, check if subscribed`);
+                let subscriptionFile = file.substring(0, file.length - 5) + 'subscription';
+                if (await fs.exists(subscriptionFile)) {
+                    if ((await fs.readFile(subscriptionFile, 'utf8')).trim() === '0') {
+                        that.logService.log(LogLevel.debug, `plc variable ${subscriptionFile}, subscribing`);
+                        await fs.writeFile(subscriptionFile, "1", { encoding: "utf8" });
+                        that.logService.log(LogLevel.debug, `plc variable ${subscriptionFile}, subscribed`);
+                    }
+                    that.logService.log(LogLevel.debug, `plc variable subsription file ${subscriptionFile} found`);
+                } else {
+                    that.logService.log(LogLevel.error, `plc variable subsription file ${subscriptionFile} not found, doing nothing`);
+                }
+            }
+        }
+        catch (e) {
+            that.logService.log(LogLevel.error, `error while checking PLC subscription file for variable ${file}`);
+            that.logService.log(LogLevel.error, e);
+        }
+
     }
 
     private async readWatchFile(w: WatchValueConfig, valueGroup: ValueGroup) {
