@@ -1,45 +1,45 @@
-import { LocalConfig } from "./localconfig";
+import { LocalConfig } from "./localconfig.js";
 
 export enum EmulationType {
-  sine = 'sine',
-  bit = 'bit'
+    sine = 'sine',
+    bit = 'bit'
 }
 
 export class EmulationValueConfig extends LocalConfig {
-  emutype: EmulationType = EmulationType.sine;
-  interval: number = 0;
-  period: number = 0;
-  
-  private _scale: number = 0;
-  private _offset: number = 0;
+    emutype: EmulationType = EmulationType.sine;
+    interval: number = 0;
+    period: number = 0;
 
-  get scale(): number {
-    return this._scale;
-  }
+    private _scale: number = 0;
+    private _offset: number = 0;
 
-  set scale(value: number) {
-    this._scale = value;
-    this.updateMinMax();
-  }
+    get scale(): number {
+        return this._scale;
+    }
 
-  get offset(): number {
-    return this._offset;
-  }
+    set scale(value: number) {
+        this._scale = value;
+        this.updateMinMax();
+    }
 
-  set offset(value: number) {
-    this._offset = value;
-    this.updateMinMax();
-  }
+    get offset(): number {
+        return this._offset;
+    }
 
-  updateMinMax() {
-    //this.minvalue = this.offset - this.scale;
-    //this.maxvalue = this.offset + this.scale;
-  }
+    set offset(value: number) {
+        this._offset = value;
+        this.updateMinMax();
+    }
 
-  public constructor(init?: Partial<EmulationValueConfig>) {
-    super();
-    Object.assign(this, init);
+    updateMinMax() {
+        //this.minvalue = this.offset - this.scale;
+        //this.maxvalue = this.offset + this.scale;
+    }
 
-    this.class = 'emulation';
-  }
+    public constructor(init?: Partial<EmulationValueConfig>) {
+        super();
+        Object.assign(this, init);
+
+        this.class = 'emulation';
+    }
 }

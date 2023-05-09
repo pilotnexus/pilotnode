@@ -34,7 +34,7 @@
           "type": "string",
           "description": "Datatype of the value",
           "enum": [
-            "boolean",
+            "bool",
             "int",
             "double",
             "string",

@@ -1,15 +1,15 @@
 import { injectable, inject } from "inversify";
 import { Engine } from 'json-rules-engine'
-import { ConfigService } from './configservice';
+import { ConfigService } from './configservice.js';
 
 @injectable()
 export class ValueService {
-  values: { [name: string]: any; } = {};
+    values: { [name: string]: any; } = {};
 
-  engine: Engine;
+    engine: Engine;
 
-  constructor(private valueService: ValueService, private config: ConfigService) {
+    constructor(private valueService: ValueService, private config: ConfigService) {
 
-    this.engine = new Engine()
-  }
+        this.engine = new Engine()
+    }
 }

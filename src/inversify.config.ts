@@ -1,20 +1,19 @@
 import { Container } from 'inversify'
 import { buildProviderModule } from 'inversify-binding-decorators'
-import { IConnectorFactory } from './connectors/connector';
-import { DeepstreamConnectorFactory } from './connectors/deepstream/factory';
-import { KnxConnectorFactory } from './connectors/knx/knx';
-import { NetvarConnectorFactory } from './connectors/netvar/netvar';
-import { LocalConnectorFactory } from './connectors/local/local';
-import { TelegrafConnectorFactory } from './connectors/telegraf/telegraf';
-import { RuleEngineFactory } from './connectors/rule/rule';
-import { TelemetryConnectorFactory } from './connectors/telemetry/telemetry';
-import { ServerConnectorFactory } from './connectors/server/server';
-import { RosConnectorFactory } from './connectors/ros/ros';
-import { MqttConnectorFactory } from './connectors/mqtt/mqtt';
-import { IConnectorValidator } from './connector_validators/connectorvalidator';
-
-import { DeepstreamValidator } from './connector_validators/deepstream/validator';
-import { ServerValidator } from './connector_validators/server/validator';
+import { IConnectorFactory } from './connectors/connector.js';
+import { DeepstreamConnectorFactory } from './connectors/deepstream/factory.js';
+import { KnxConnectorFactory } from './connectors/knx/knx.js';
+import { NetvarConnectorFactory } from './connectors/netvar/netvar.js';
+import { LocalConnectorFactory } from './connectors/local/local.js';
+import { TelegrafConnectorFactory } from './connectors/telegraf/telegraf.js';
+import { RuleEngineFactory } from './connectors/rule/rule.js';
+import { TelemetryConnectorFactory } from './connectors/telemetry/telemetry.js';
+import { ServerConnectorFactory } from './connectors/server/server.js';
+import { RosConnectorFactory } from './connectors/ros/ros.js';
+import { MqttConnectorFactory } from './connectors/mqtt/mqtt.js';
+import { IConnectorValidator } from './connector_validators/connectorvalidator.js';
+import { DeepstreamValidator } from './connector_validators/deepstream/validator.js';
+import { ServerValidator } from './connector_validators/server/validator.js';
 
 enum NAMED_OBJECTS {
     CONNECTOR = 'ConnectorFactory',
@@ -22,7 +21,7 @@ enum NAMED_OBJECTS {
     PLUGIN = 'PluginFactory'
 }
 
-const globalContainer = new Container({ autoBindInjectable: true, defaultScope: "Singleton"});
+const globalContainer = new Container({ autoBindInjectable: true, defaultScope: "Singleton" });
 
 globalContainer.bind<IConnectorFactory>(NAMED_OBJECTS.CONNECTOR).to(DeepstreamConnectorFactory);
 globalContainer.bind<IConnectorFactory>(NAMED_OBJECTS.CONNECTOR).to(KnxConnectorFactory);
