@@ -8,7 +8,6 @@ import { LoggingService, LogLevel } from '../../services/loggingservice.js';
 import { IConnectorFactory, IConnector } from '../connector.js';
 import { globalContainer } from "../../inversify.config.js";
 import { NAMED_OBJECTS } from "../../inversify.config.js";
-
 import chalk from "chalk";
 
 class KnxConfig {

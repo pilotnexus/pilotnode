@@ -2,7 +2,7 @@ import { Container } from 'inversify'
 import { buildProviderModule } from 'inversify-binding-decorators'
 import { IConnectorFactory } from './connectors/connector.js';
 import { DeepstreamConnectorFactory } from './connectors/deepstream/factory.js';
-import { KnxConnectorFactory } from './connectors/knx/knx.js';
+//import { KnxConnectorFactory } from './connectors/knx/knx.js';
 import { NetvarConnectorFactory } from './connectors/netvar/netvar.js';
 import { LocalConnectorFactory } from './connectors/local/local.js';
 import { TelegrafConnectorFactory } from './connectors/telegraf/telegraf.js';
@@ -24,7 +24,7 @@ enum NAMED_OBJECTS {
 const globalContainer = new Container({ autoBindInjectable: true, defaultScope: "Singleton" });
 
 globalContainer.bind<IConnectorFactory>(NAMED_OBJECTS.CONNECTOR).to(DeepstreamConnectorFactory);
-globalContainer.bind<IConnectorFactory>(NAMED_OBJECTS.CONNECTOR).to(KnxConnectorFactory);
+//globalContainer.bind<IConnectorFactory>(NAMED_OBJECTS.CONNECTOR).to(KnxConnectorFactory);
 globalContainer.bind<IConnectorFactory>(NAMED_OBJECTS.CONNECTOR).to(NetvarConnectorFactory);
 globalContainer.bind<IConnectorFactory>(NAMED_OBJECTS.CONNECTOR).to(LocalConnectorFactory);
 globalContainer.bind<IConnectorFactory>(NAMED_OBJECTS.CONNECTOR).to(TelegrafConnectorFactory);

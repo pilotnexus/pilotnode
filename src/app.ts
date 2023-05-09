@@ -1,5 +1,5 @@
 ﻿#!/usr/bin/env node
-//import { logger } from 'log-driver';
+
 import "reflect-metadata";
 import { globalContainer } from './inversify.config.js';
 import { ConfigService, ConfigServiceFactory } from './services/configservice.js';
@@ -97,7 +97,7 @@ program
         process.exit(await Helper.removeService());
     });
 
-program.version('0.5.4'); //TODO, unify with package.json?
+program.version('0.5.6'); //TODO, unify with package.json?
 program.parse(process.argv);
 
 
