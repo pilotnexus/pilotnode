@@ -6,6 +6,7 @@ import { LocalConfig } from "./localconfig.js";
 export class WatchValueConfig extends LocalConfig implements IFileValueConfig {
     file: string = '';
     writefile: string = '';
+    readretry: number = 3;
     directwrite: boolean = false;
     monitorTimeout: number = 0;
     data: Buffer = Buffer.from('');

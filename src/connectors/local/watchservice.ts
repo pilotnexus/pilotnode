@@ -6,6 +6,8 @@ import { ValueGroup, SubValue } from '../../value.js';
 import { LoggingService, LogLevel } from '../../services/loggingservice.js';
 import { FileService } from './fileservice.js';
 import { getBasedir } from '../../folders.js';
+import { setTimeout } from "timers/promises";
+
 export class WatchService {
 
     constructor(private nodeid: string, private logService: LoggingService, private terminationFunctions: any[]) {
@@ -64,7 +66,7 @@ export class WatchService {
         try {
             if (file.startsWith(path.join(getBasedir(), 'plc/variables')) && file.endsWith('value')) {
                 that.logService.log(LogLevel.debug, `plc variable file ${file} detected, check if subscribed`);
-                let subscriptionFile = file.substring(0, file.length - 5) + 'subscription';
+                let subscriptionFile = file.substring(0, file.length - 5) + 'subscribe';
                 if (await fs.exists(subscriptionFile)) {
                     if ((await fs.readFile(subscriptionFile, 'utf8')).trim() === '0') {
                         that.logService.log(LogLevel.debug, `plc variable ${subscriptionFile}, subscribing`);
@@ -86,13 +88,21 @@ export class WatchService {
 
     private async readWatchFile(w: WatchValueConfig, valueGroup: ValueGroup) {
         let that = this;
-        try {
-            let value = await fs.readFile(w.file, 'utf8');
-            valueGroup.values[SubValue.targetValue].setValue(value, "__local.WatchService");
-            valueGroup.values[SubValue.actualValue].setValue(value, "__local.WatchService");
-        } catch (e) {
-            that.logService.log(LogLevel.error, `error while reading watched file ${w.file}`);
-            that.logService.log(LogLevel.error, e);
+        for (let i = 0; i < w.readretry; i++) {
+            try {
+                let value = await fs.readFile(w.file, 'utf8');
+                valueGroup.values[SubValue.targetValue].setValue(value, "__local.WatchService");
+                valueGroup.values[SubValue.actualValue].setValue(value, "__local.WatchService");
+                return;
+            }
+            catch (e) {
+                if (i === w.readretry - 1) {
+                    that.logService.log(LogLevel.error, `error while reading watched file ${w.file}`);
+                    that.logService.log(LogLevel.error, e);
+                } else {
+
+                }
+            }
         }
     }
 
