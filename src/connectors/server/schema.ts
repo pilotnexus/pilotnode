@@ -237,11 +237,7 @@ export class PilotNodeGraphQLSchema {
             resolve: async (source: any, args: any) => {
                 if (args.name && args.name in this.valueService.valuelookup) {
                     if (args.subValue in this.valueService.valuelookup[args.name].values) {
-                        if (args.value) {
-                            return this.valueService.valuelookup[args.name].values[args.subValue].getValue();
-                        } else {
-                            throw new Error('value not found')
-                        }
+                        return this.valueService.valuelookup[args.name].values[args.subValue].getValue();
                     } else {
                         throw new Error('subValue not found');
                     }
@@ -260,11 +256,7 @@ export class PilotNodeGraphQLSchema {
             resolve: async (source: any, args: any) => {
                 if (args.name && args.name in this.valueService.valuelookup) {
                     if (args.subValue in this.valueService.valuelookup[args.name].values) {
-                        if (args.value) {
-                            return this.valueService.valuelookup[args.name].values[args.subValue].properties;
-                        } else {
-                            throw new Error('value not found')
-                        }
+                        return this.valueService.valuelookup[args.name].values[args.subValue].properties;
                     } else {
                         throw new Error('subValue not found');
                     }
