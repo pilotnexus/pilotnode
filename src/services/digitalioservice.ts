@@ -1,5 +1,4 @@
 import fs from "fs-extra";
-
 import { Helper } from '../helper.js';
 import { ConnectorConfig } from '../value.js';
 

@@ -14,26 +14,38 @@ const {
     SCOPE = "openid email offline_access"
 } = process.env;
 
+export type AuthServiceFactory = () => Promise<AuthService>;
+
 @injectable()
 export class AuthService {
-    private issuer: Promise<Issuer<Client>>;
-    private client: Promise<Client>;
+    private issuer: Promise<Issuer<Client>> | null = null;
+    private client: Promise<Client> | null = null;
 
-    constructor(private config: ConfigService) {
-        let that = this;
-        this.issuer = Issuer.discover(ISSUER);
-        this.client = new Promise<Client>(resolve => {
-            that.issuer.then(issuer => {
+    public disabled: boolean = false;
+
+    constructor(@inject(ConfigService) private config: ConfigService) { }
+
+    async init() {
+        try {
+            this.issuer = Issuer.discover(ISSUER);
+            let issuerInstance = await this.issuer;
+
+            this.client = new Promise<Client>(resolve => {
                 resolve(
-                    new issuer.Client({
+                    new issuerInstance.Client({
                         client_id: CLIENT_ID,
                         token_endpoint_auth_method: "none"
                     })
                 );
             });
-        });
+        } catch (error) {
+            console.log("Error getting OpenID issuer, falling back to offline mode");
+            // Set issuer and client to null
+            this.issuer = null;
+            this.client = null;
+            this.disabled = true;
+        }
     }
-
     get tokenSet() {
         return this.config.tokenSet;
     }
@@ -49,12 +61,13 @@ export class AuthService {
 
             // refresh if (almost) expired (less than 60 seconds)
             if (expires < 60) {
-                let newTokenSet = await (await that.client).refresh(
+                let newTokenSet = await (await that.client)?.refresh(
                     that.config.tokenSet
                 );
-
-                newTokenSet.refresh_token = that.config.tokenSet.refresh_token;
-                that.config.tokenSet = newTokenSet;
+                if (newTokenSet) {
+                    newTokenSet.refresh_token = that.config.tokenSet.refresh_token;
+                    that.config.tokenSet = newTokenSet;
+                }
 
                 await that.config.saveTokenset();
             }
@@ -86,9 +99,9 @@ export class AuthService {
 
     async auth(): Promise<AuthService | null> {
         let that = this;
+        if (!that.issuer || !that.client) return null;
         try {
             //log(italic("Starting..."));
-
             const { token_endpoint, device_authorization_endpoint } = (
                 await that.issuer
             ).metadata;
@@ -209,13 +222,15 @@ async function axiosFetcher(auth: AuthService, url: string, input: any) {
         validateStatus: () => true
     };
 
-    let authHeader = await auth.token();
-    if (!authHeader) {
-        throw Error(`ERROR, access-token could not be aquired, token is ${authHeader}`);
-    }
+    if (!auth.disabled) { //if authentication is not disabled
+        let authHeader = await auth.token();
+        if (!authHeader) {
+            throw Error(`ERROR, access-token could not be aquired, token is ${authHeader}`);
+        }
 
-    if (config.headers) {
-        config.headers["Authorization"] = authHeader;
+        if (config.headers) {
+            config.headers["Authorization"] = authHeader;
+        }
     }
 
     const result = await axios(config);
@@ -225,7 +240,7 @@ async function axiosFetcher(auth: AuthService, url: string, input: any) {
         typeof result.data === `object` ? JSON.stringify(result.data) : result.data;
 
     const headers = new Headers();
-    Object.entries(result.headers).forEach(function([key, value]) {
+    Object.entries(result.headers).forEach(function ([key, value]) {
         headers.append(key, value as string);
     });
 

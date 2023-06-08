@@ -97,7 +97,7 @@ program
         process.exit(await Helper.removeService());
     });
 
-program.version('0.5.6'); //TODO, unify with package.json?
+program.version('0.5.7'); //TODO, unify with package.json?
 program.parse(process.argv);
 
 
@@ -162,6 +162,7 @@ async function startup(options: any): Promise<Function> {
 
     let unauthorized = false;
     let auth = globalContainer.get(AuthService);
+    await auth.init(); //Required!
 
     //check if we should authorize
     if (options.auth) {

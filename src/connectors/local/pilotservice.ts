@@ -1,6 +1,4 @@
-
 import fs from "fs-extra";
-
 import { FileValueConfig, IFileValueConfig } from "./filevalueconfig.js";
 import { ValueGroup, SubValue } from "../../value.js";
 import { LoggingService, LogLevel } from "../../services/loggingservice.js";

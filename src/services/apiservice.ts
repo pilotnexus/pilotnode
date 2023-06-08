@@ -45,7 +45,7 @@ export class ApiService {
     /// - false: use authorization
     async init(unauthorized: Boolean): Promise<ApolloClientType<NormalizedCacheObject> | null> {
         let that = this;
-        if (that.client === null) { //TODO: for now don't connect at all when unauthorized (there is not much we can read as an unauthorized user)
+        if (that.client === null && !that.auth.disabled) { //TODO: for now don't connect at all when unauthorized (there is not much we can read as an unauthorized user)
             that.log.log(LogLevel.info, `Connecting to ${that.configService.config.pilotapiurl} in unauthorized mode`);
             try {
                 const cache = new InMemoryCache();
