@@ -21,7 +21,7 @@ import { CommandValueConfig } from "./commandvalueconfig.js";
 import { EmulationValueConfig } from "./emulationvalueconfig.js";
 import { SerialValueConfig } from "./serialvalueconfig.js";
 import { LocalConfig } from "./localconfig.js";
-import { LoggingService, LogLevel } from "../../services/loggingservice.js";
+import { LoggingService } from "../../services/loggingservice.js";
 import { IConnectorFactory, IConnector } from "../connector.js";
 import { NAMED_OBJECTS } from "../../inversify.config.js";
 import { PilotService } from "./pilotservice.js";
@@ -103,7 +103,7 @@ export class LocalConnector implements IConnector {
         //let digitalioservice = new DigitalIOService();
         //digitalioservice.update();
         return async () => {
-            that.log.log(LogLevel.debug, `closing ${that.terminationFunctions.length} local connector values...`);
+            that.log.logger.debug(`closing ${that.terminationFunctions.length} local connector values...`);
             for (let terminate of that.terminationFunctions) {
                 await terminate();
             }
@@ -150,10 +150,7 @@ export class LocalConnector implements IConnector {
                     //await that.serialService.add(new SerialValueConfig(sub));
                     break;
                 default:
-                    this.log.log(
-                        LogLevel.error,
-                        `Cannot find local class '${sub.class}'`
-                    );
+                    this.log.logger.error(`Cannot find local class '${sub.class}'`);
             }
         } catch (e) {
             console.log("Failed creating subscription");

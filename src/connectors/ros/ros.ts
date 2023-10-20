@@ -3,7 +3,7 @@ import { injectable } from 'inversify';
 import { IConnector, IConnectorFactory } from '../connector.js';
 import { ValueGroup, SubValue, ConnectorConfig, Value } from '../../value.js';
 import { globalContainer } from "../../inversify.config.js";
-import { LoggingService, LogLevel } from '../../services/loggingservice.js';
+import { LoggingService } from '../../services/loggingservice.js';
 import { DH_UNABLE_TO_CHECK_GENERATOR } from 'constants';
 import chalk from "chalk";
 
@@ -76,7 +76,7 @@ export class RosConnector implements IConnector {
 
         let rosnode = require('rosnodejs');
         rosnode.initNode(that.rosConfig.nodeName, options).then((rosNode: any) => {
-            that.logService.log(LogLevel.info, `Connector '${that.name}': ${chalk.green('connected')}`);
+            that.logService.logger.info(`Connector '${that.name}': ${chalk.green('connected')}`);
             that.rosConfig.subscriptions.forEach(sub => that.subscribe(rosNode, sub));
         })
 

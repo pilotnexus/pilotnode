@@ -1,7 +1,7 @@
 import fs from "fs-extra";
 import { FileValueConfig, IFileValueConfig } from "./filevalueconfig.js";
 import { ValueGroup, SubValue } from "../../value.js";
-import { LoggingService, LogLevel } from "../../services/loggingservice.js";
+import { LoggingService } from "../../services/loggingservice.js";
 import path from 'path';
 import { getJSDocThisTag } from "typescript";
 import Joi from 'joi';

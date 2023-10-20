@@ -3,7 +3,7 @@ import { provide } from 'inversify-binding-decorators';
 import * as net from 'net';
 import { ConnectorConfig, ValueGroup, SubValue } from '../../value.js';
 import { ConfigService } from '../../services/configservice.js';
-import { LoggingService, LogLevel } from '../../services/loggingservice.js';
+import { LoggingService } from '../../services/loggingservice.js';
 import { IConnectorFactory, IConnector } from '../connector.js';
 import { NAMED_OBJECTS } from "../../inversify.config.js";
 
@@ -55,22 +55,22 @@ export class TelegrafConnector implements IConnector {
             client.on('error', function(e) {
                 that.client = null;
 
-                that.log.log(LogLevel.error, `Connector ${that.name}: Socket error`, e);
+                that.log.logger.error(`Connector ${that.name}: Socket error`, e);
             });
 
             await client.connect(this.tgconfig.socket);
-            that.log.log(LogLevel.info, `Connector ${that.name}: Connected to Telegraf Socket`);
+            that.log.logger.info(`Connector ${that.name}: Connected to Telegraf Socket`);
 
             // Add a 'close' event handler for the client socket
             client.on('close', function() {
-                that.log.log(LogLevel.error, `Connector ${that.name}: Connection closed`);
+                that.log.logger.error(`Connector ${that.name}: Connection closed`);
             });
 
             that.client = client;
         }
         catch (e) {
             that.client = null;
-            that.log.log(LogLevel.error, `Connector ${that.name}: Could not connect to Telegraf socket`, e);
+            that.log.logger.error(`Connector ${that.name}: Could not connect to Telegraf socket`, e);
         }
     }
 

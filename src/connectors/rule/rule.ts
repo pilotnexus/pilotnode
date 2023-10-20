@@ -1,7 +1,7 @@
 import { injectable } from "inversify";
 import { ConfigService } from "../../services/configservice.js";
 import { IConnectorFactory, IConnector } from "../connector.js";
-import { LoggingService, LogLevel } from "../../services/loggingservice.js";
+import { LoggingService } from "../../services/loggingservice.js";
 import { ValueGroup } from "../../value.js";
 import { ConnectorConfig } from "../../value.js";
 import { SubValue } from "../../value.js";
@@ -60,7 +60,7 @@ export class RuleEngineConnector implements IConnector {
 
         worker.on('message', (result: any) => {
             if (result.error) {
-                this.log.log(LogLevel.error, 'Rules Engine Error', result.error);
+                this.log.logger.error('Rules Engine Error', result.error);
             } else if (result.events) {
                 for (let event of result.events) {
                     if (event.params.value !== undefined && !isNaN(event.params.index)) {
@@ -70,7 +70,7 @@ export class RuleEngineConnector implements IConnector {
                     if (event.params.message) {
                         // write message to server
                         this.api.insertMessage(event.params.message).catch(reason => {
-                            this.log.log(LogLevel.error, 'Could not send notification message to Server', reason);
+                            this.log.logger.error('Could not send notification message to Server', reason);
                         });
                     }
 
@@ -81,11 +81,11 @@ export class RuleEngineConnector implements IConnector {
         });
 
         worker.on('error', (err: Error) => {
-            this.log.log(LogLevel.error, "Rule-Engine worker error: ", err);
+            this.log.logger.error("Rule-Engine worker error: ", err);
         });
 
         worker.on('exit', (code) => {
-            this.log.log(LogLevel.error, 'worker thread stopped');
+            this.log.logger.error('worker thread stopped');
         });
 
         return {

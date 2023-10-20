@@ -4,7 +4,7 @@ import * as os from "os";
 import fs from "fs-extra";
 import "reflect-metadata";
 import { TokenSet } from "openid-client";
-import { LoggingService, LogLevel } from "./loggingservice.js";
+import { LoggingService } from "./loggingservice.js";
 import path from 'path';
 import Joi from 'joi';
 import { v4 as uuid_v4 } from 'uuid';
@@ -167,10 +167,10 @@ export class ConfigService {
                             validationResults.push(result);
                         }
                     } else {
-                        that.log.log(LogLevel.error, `Connector '${conn.name}' has no validator`);
+                        that.log.logger.error(`Connector '${conn.name}' has no validator`);
                     }
                 } else {
-                    that.log.log(LogLevel.error, `Connector '${conn.name}' does not have type specified`);
+                    that.log.logger.error(`Connector '${conn.name}' does not have type specified`);
                 }
             }
         }
@@ -246,16 +246,16 @@ export class ConfigService {
     static async loadIdentity(log: LoggingService): Promise<Config> {
         let identityfile = path.resolve(getIdentityfile());
         try {
-            log.log(LogLevel.debug, "Parsing " + identityfile);
+            log.logger.debug("Parsing " + identityfile);
 
             if (!await fs.exists(identityfile)) {
-                log.log(LogLevel.warn, "Identity file does not exist, generating one with a new Node ID");
+                log.logger.warn("Identity file does not exist, generating one with a new Node ID");
                 this.fileWriter(identityfile, { name: "new node", nodeid: uuid_v4() });
             }
 
             return await this.fileLoader(identityfile);
         } catch (e) {
-            log.log(LogLevel.error, `ERROR: Could not load config file ${getCfgfile()}`, e);
+            log.logger.error(`ERROR: Could not load config file ${getCfgfile()}`, e);
             //TODO - fallback to server config?
             throw e;
         }
@@ -265,10 +265,10 @@ export class ConfigService {
         // load config
         let cfgfile = path.resolve(getCfgfile());
         try {
-            log.log(LogLevel.debug, "Parsing " + cfgfile);
+            log.logger.debug("Parsing " + cfgfile);
 
             if (!await fs.exists(cfgfile)) {
-                log.log(LogLevel.warn, "Configuration file does not exist, generating one with a new Node ID");
+                log.logger.warn("Configuration file does not exist, generating one with a new Node ID");
                 this.fileWriter(cfgfile, { nodeid: uuid_v4() });
             }
 
@@ -299,10 +299,10 @@ export class ConfigService {
             //create object and sanity check configuration
             let configObj = new Config(config);
 
-            log.log(LogLevel.debug, `Node Id: ${configObj.nodeid}`);
+            log.logger.debug(`Node Id: ${configObj.nodeid}`);
             return configObj;
         } catch (e) {
-            log.log(LogLevel.error, `ERROR: Could not load config file ${getCfgfile()}`, e);
+            log.logger.error(`ERROR: Could not load config file ${getCfgfile()}`, e);
             //TODO - fallback to server config?
             throw e;
         }

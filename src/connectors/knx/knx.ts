@@ -4,7 +4,7 @@ import * as knx from 'knx';
 import { ConnectorConfig, ValueGroup, SubValue } from '../../value.js';
 import { ConfigService } from '../../services/configservice.js';
 import { KnxValueConfig } from './knxvalueconfig.js';
-import { LoggingService, LogLevel } from '../../services/loggingservice.js';
+import { LoggingService } from '../../services/loggingservice.js';
 import { IConnectorFactory, IConnector } from '../connector.js';
 import { globalContainer } from "../../inversify.config.js";
 import { NAMED_OBJECTS } from "../../inversify.config.js";
@@ -126,7 +126,7 @@ export class KnxConnector implements IConnector {
                 connected: function() {
                     that.connected = true;
                     let sub: KnxValueConfig;
-                    that.log.log(LogLevel.info, `Connector '${that.name}': ${chalk.green('connected')}`);
+                    that.log.logger.info(`Connector '${that.name}': ${chalk.green('connected')}`);
 
                     for (const ga in that.subs) {
                         if (!that.subs[ga].config.initialized) {
@@ -141,7 +141,7 @@ export class KnxConnector implements IConnector {
                 // get notified on connection errors
                 error: function(connstatus: string) {
                     that.connected = false;
-                    that.log.log(LogLevel.error, `Connector '${that.name}': ${chalk.red(connstatus)}`);
+                    that.log.logger.error(`Connector '${that.name}': ${chalk.red(connstatus)}`);
                 }
             }
         });

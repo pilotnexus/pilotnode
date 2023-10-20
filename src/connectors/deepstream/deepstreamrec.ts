@@ -1,6 +1,6 @@
 import { DeepstreamClient } from "@deepstream/client";
 import { Record } from "@deepstream/client/dist/src/record/record.js";
-import { LoggingService, LogLevel } from "../../services/loggingservice.js";
+import { LoggingService } from "../../services/loggingservice.js";
 import { ConnectorConfig, ValueGroup, SubValue, Value } from "../../value.js";
 
 export class Rec {
@@ -79,11 +79,11 @@ export class Rec {
                 this.record.set(subName, value);
                 //console.log(`Record set ${this.record.name}/${subName}, ${value}`);
             } catch (e) {
-                this.logService.log(LogLevel.error, `ERROR setting ${this.record.name} with subvalue ${subName} to value '${value}': ${JSON.stringify(e, null, 2)}`);
+                this.logService.logger.error(`ERROR setting ${this.record.name} with subvalue ${subName} to value '${value}': ${JSON.stringify(e, null, 2)}`);
             }
         } else {
             this.value[subName] = value;
-            this.logService.log(LogLevel.debug, `cannot set ${this.record.name} with subvalue ${subName} to value '${value}', buffering`);
+            this.logService.logger.debug(`cannot set ${this.record.name} with subvalue ${subName} to value '${value}', buffering`);
         }
         return true;
     }

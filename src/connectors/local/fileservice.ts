@@ -3,7 +3,7 @@ import fs from "fs-extra";
 import { Helper } from "../../helper.js";
 import { FileValueConfig, IFileValueConfig } from "./filevalueconfig.js";
 import { ValueGroup, SubValue, Value } from "../../value.js";
-import { LoggingService, LogLevel } from "../../services/loggingservice.js";
+import { LoggingService } from "../../services/loggingservice.js";
 
 export class FileService {
 
@@ -20,7 +20,7 @@ export class FileService {
             try {
                 fs.closeSync(await fs.open(file.file, "w"));
             } catch {
-                that.logService.log(LogLevel.error, `File ${file.file} did not exist and could not be created`);
+                that.logService.logger.error(`File ${file.file} did not exist and could not be created`);
                 successful = false;
             }
         }
@@ -95,7 +95,7 @@ export class FileService {
 
         terminationFunctions.push(() => {
             clearInterval(interval);
-            that.logService.log(LogLevel.debug, `removed ${valueGroup.fullname} polling interval`);
+            that.logService.logger.debug(`removed ${valueGroup.fullname} polling interval`);
         });
     }
 
@@ -111,7 +111,7 @@ export class FileService {
             if (file.writefile != file.file) { //writefile differs from file
                 use_fd = false; //if the filenames are different, don't use the fd
                 // since it points fo file.file.
-                log.log(LogLevel.debug, `writefile is ${file.writefile} and file set to ${file.file}. We are not using the file descriptor for writing. File is opened and closed every time data is written.`);
+                log.logger.debug(`writefile is ${file.writefile} and file set to ${file.file}. We are not using the file descriptor for writing. File is opened and closed every time data is written.`);
             }
             writefile = file.writefile;
         } else { //otherwise always use filename

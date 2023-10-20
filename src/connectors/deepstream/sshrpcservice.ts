@@ -2,7 +2,7 @@ import { Client, ClientChannel } from 'ssh2'
 import { v4 as uuid_v4 } from 'uuid';
 import { ConfigService } from '../../services/configservice.js';
 import { DeepstreamConnector } from './deepstream.js';
-import { LoggingService, LogLevel } from '../../services/loggingservice.js';
+import { LoggingService } from '../../services/loggingservice.js';
 import { RPCResponse } from '@deepstream/client/dist/src/rpc/rpc-response.js';
 
 //import { RPCProvider } from '@deepstream/client/dist/rpc/rpc-handler';
@@ -165,11 +165,11 @@ export class SshRpcService {
                     }
 
                     let id = uuid_v4();
-                    that.logService.log(LogLevel.debug, `ssh session ${id} ready`);
+                    that.logService.logger.debug(`ssh session ${id} ready`);
                     that.sessions[id] = { client, stream };
 
                     stream.on('close', async () => {
-                        that.logService.log(LogLevel.debug, `ssh session ${id} closed`);
+                        that.logService.logger.debug(`ssh session ${id} closed`);
                         delete that.sessions[id];
                         client.end();
                         try {
@@ -182,7 +182,7 @@ export class SshRpcService {
                         }
                         catch (e) {
                             //TODO
-                            that.logService.log(LogLevel.debug, `Error trying to make RPC call for stdout.`);
+                            that.logService.logger.debug(`Error trying to make RPC call for stdout.`);
                         }
                     });
 

@@ -3,7 +3,7 @@ import { provide } from 'inversify-binding-decorators';
 import { ConnectorConfig, ValueGroup, SubValue } from '../../value.js';
 import { ConfigService } from '../../services/configservice.js';
 import { NetvarValueConfig as NetvarValueConfig } from './netvarvalueconfig.js';
-import { LoggingService, LogLevel } from '../../services/loggingservice.js';
+import { LoggingService } from '../../services/loggingservice.js';
 import { IConnectorFactory, IConnector } from '../connector.js';
 import { globalContainer } from "../../inversify.config.js";
 import { NAMED_OBJECTS } from "../../inversify.config.js";
@@ -88,10 +88,10 @@ export class NetvarConnector implements IConnector {
     setValue(config: ConnectorConfig, val: ValueGroup, subValue: SubValue, value: any) {
         let that = this;
 
-        that.log.log(LogLevel.debug, `trying to set netvar value, connector ${that.name}, variable: ${val.fullname}, value: ${value}`);
+        that.log.logger.debug(`trying to set netvar value, connector ${that.name}, variable: ${val.fullname}, value: ${value}`);
         if (that.connection && that.list && subValue === SubValue.targetValue) {
             if (that.list.set(val.fullname, value)) {
-                that.log.log(LogLevel.debug, `netvar value set, connector ${that.name}, variable: ${val.fullname}, value: ${value}`);
+                that.log.logger.debug(`netvar value set, connector ${that.name}, variable: ${val.fullname}, value: ${value}`);
             }
         }
     }
@@ -126,14 +126,14 @@ export class NetvarConnector implements IConnector {
                 case 'REAL': dataObj[value] = t.real(idx); break;
                 case 'LREAL': dataObj[value] = t.lReal(idx); break;
                 default:
-                    that.log.log(LogLevel.error, `ERROR: the netvar type ${JSON.stringify(that.values[i].config.type)} does not exist.
+                    that.log.logger.error(`ERROR: the netvar type ${JSON.stringify(that.values[i].config.type)} does not exist.
           possible values are: BOOLEAN, WORD, STRING, WSTRING, BYTE, DWORD, TIME, REAL, LREAL`);
                     break;
 
             }
         }
 
-        that.log.log(LogLevel.debug, `connecting UDP Network Variable list ${that.netvarconfig.ip}, port ${that.netvarconfig.port}`);
+        that.log.logger.debug(`connecting UDP Network Variable list ${that.netvarconfig.ip}, port ${that.netvarconfig.port}`);
         that.connection = client(that.netvarconfig.ip,
             {
                 port: that.netvarconfig.port,
@@ -156,10 +156,10 @@ export class NetvarConnector implements IConnector {
                 },
                 dataObj
             );
-            that.log.log(LogLevel.debug, `added netvar list ${JSON.stringify(dataObj)}`);
-            that.log.log(LogLevel.info, `Connector '${that.name}': ${chalk.green('connected')}`);
+            that.log.logger.debug(`added netvar list ${JSON.stringify(dataObj)}`);
+            that.log.logger.info(`Connector '${that.name}': ${chalk.green('connected')}`);
             if (that.netvarconfig.cyclic) {
-                that.log.log(LogLevel.info, `Send interval for '${that.name}' is ${that.netvarconfig.cycleInterval}ms`);
+                that.log.logger.info(`Send interval for '${that.name}' is ${that.netvarconfig.cycleInterval}ms`);
             }
 
             for (let i = 0; i < that.values.length; i++) {

@@ -1,7 +1,7 @@
 import { injectable, inject } from "inversify";
 import { ConfigService } from "./configservice.js";
 
-import { LoggingService, LogLevel } from './loggingservice.js';
+import { LoggingService } from './loggingservice.js';
 import { IConnector, IConnectorFactory } from "../connectors/connector.js";
 import { globalContainer, NAMED_OBJECTS } from "../inversify.config.js";
 import { LocalConnector, LocalConnectorFactory } from "../connectors/local/local.js";
@@ -49,7 +49,7 @@ export class ConnectorService {
                         that.autobind[conn.name] = conn.autobind;
                     }
                 } else {
-                    that.logService.log(LogLevel.error, `Connector '${conn.name}' does not have type specified`);
+                    that.logService.logger.error(`Connector '${conn.name}' does not have type specified`);
                 }
 
             }
@@ -58,7 +58,7 @@ export class ConnectorService {
         return async () => {
             for (let [name, term] of terminate) {
                 await term();
-                that.logService.log(LogLevel.info, `Connector '${name}' closed`);
+                that.logService.logger.info(`Connector '${name}' closed`);
             }
         };
     }

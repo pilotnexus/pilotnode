@@ -7,7 +7,7 @@ import { Helper } from './helper.js';
 import { ValueService } from './services/valueservice.js';
 import { ConnectorService } from './services/connectorservice.js';
 import { AuthService } from './services/authservice.js';
-import { LoggingService, LogLevel } from "./services/loggingservice.js";
+import { LoggingService } from "./services/loggingservice.js";
 import { ApiService } from "./services/apiservice.js";
 import { program } from 'commander';
 import fs from "fs-extra";
@@ -97,7 +97,7 @@ program
         process.exit(await Helper.removeService());
     });
 
-program.version('0.5.7'); //TODO, unify with package.json?
+program.version('0.5.8'); //TODO, unify with package.json?
 program.parse(process.argv);
 
 
@@ -127,10 +127,9 @@ async function startup(options: any): Promise<Function> {
 
     // handle parameters that need the configuration
     let logService = globalContainer.get(LoggingService);
-    logService.logLevel = LogLevel.info;
     if (options.debug) {
-        logService.log(LogLevel.info, 'running in DEBUG logging mode');
-        globalContainer.get(LoggingService).logLevel = LogLevel.debug;
+        logService.logger.info('running in DEBUG logging mode');
+        globalContainer.get(LoggingService).logger.level = 'debug';
     }
 
     let configService = await config_init(options);
@@ -145,20 +144,19 @@ async function startup(options: any): Promise<Function> {
         let varTarget = "/proc/pilot/plc/varconfig";
 
         if (fs.existsSync(varSource) && fs.existsSync(varTarget)) {
-            logService.log(LogLevel.info, `Found PLC variables at ${varSource}`);
+            logService.logger.info(`Found PLC variables at ${varSource}`);
             try {
                 fs.copyFileSync(varSource, varTarget);
-                logService.log(LogLevel.info, 'PLC variables set');
+                logService.logger.info('PLC variables set');
             }
             catch (e: any) {
-                logService.log(LogLevel.error, 'Could not set PLC variables');
-                logService.log(e);
+                logService.logger.error('Could not set PLC variables');
+                logService.logger.error(e);
             }
         } else {
-            logService.log(LogLevel.error, `Variable file ${options.setvariables} does not exist, skipping`);
+            logService.logger.error(`Variable file ${options.setvariables} does not exist, skipping`);
         }
     }
-
 
     let unauthorized = false;
     let auth = globalContainer.get(AuthService);
@@ -182,13 +180,13 @@ async function main(configService: ConfigService, logService: LoggingService): P
     try {
         const timeSync = NtpTimeSync.getInstance();
         const result = await timeSync.getTime();
-        logService.log(LogLevel.info, "Current System Time", new Date());
-        logService.log(LogLevel.info, "Real Time", result.now);
-        logService.log(LogLevel.info, "offset in milliseconds", result.offset);
+        logService.logger.info("Current System Time", new Date());
+        logService.logger.info("Real Time", result.now);
+        logService.logger.info("offset in milliseconds", result.offset);
     }
     catch (e) {
-        logService.log(LogLevel.error, "Cannot get time from NTP server");
-        logService.log(LogLevel.error, e);
+        logService.logger.error("Cannot get time from NTP server");
+        logService.logger.error(e);
     }
 
     // create connector service
@@ -203,7 +201,7 @@ async function main(configService: ConfigService, logService: LoggingService): P
         await valueService.createValues();
     }
     catch (e) {
-        logService.log(LogLevel.error, e);
+        logService.logger.error(e);
         process.exit(1);
     }
 
@@ -214,7 +212,7 @@ async function main(configService: ConfigService, logService: LoggingService): P
         await valueService.bind();
     }
     catch (e) {
-        logService.log(LogLevel.error, e);
+        logService.logger.error(e);
         process.exit(1);
     }
 

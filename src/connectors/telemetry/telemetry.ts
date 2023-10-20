@@ -2,7 +2,7 @@ import { injectable } from "inversify";
 
 import { ConfigService } from "../../services/configservice.js";
 import { IConnectorFactory, IConnector } from "../connector.js";
-import { LoggingService, LogLevel } from "../../services/loggingservice.js";
+import { LoggingService } from "../../services/loggingservice.js";
 import { ValueGroup } from "../../value.js";
 import { ConnectorConfig } from "../../value.js";
 import { SubValue } from "../../value.js";
@@ -69,31 +69,31 @@ export class TelemetryConnector implements IConnector {
             try {
                 switch (result.cmd) {
                     case TelemetryCommand.LOG:
-                        this.logService.log(result.logLevel, `Telemetry worker: ${result.message}`);
+                        this.logService.logMessage(result.logLevel, `Telemetry worker: ${result.message}`);
                         break;
                     case TelemetryCommand.RPC:
                         if ('response' in result && 'id' in result.response && 'method' in result.response && 'accesstoken' in result) {
-                            //this.logService.log(LogLevel.info, `Telemetry worker: RPC ${JSON.stringify(result.response)}`);
+                            //this.logService.logger.info( `Telemetry worker: RPC ${JSON.stringify(result.response)}`);
                             let response = await this.rpcService.call(result.response.method, result.response.params);
-                            //this.logService.log(LogLevel.info, `RPC result is ${JSON.stringify(response)}`);
+                            //this.logService.logger.info( `RPC result is ${JSON.stringify(response)}`);
                             worker.postMessage({ cmd: TelemetryCommand.RPC, data: { id: result.response.id, accesstoken: result.accesstoken, response } })
                         } else {
-                            this.logService.log(LogLevel.error, `Telemetry worker: malformed RPC message ${JSON.stringify(result.response)}`);
+                            this.logService.logger.error(`Telemetry worker: malformed RPC message ${JSON.stringify(result.response)}`);
                         }
                         break;
                 }
             }
             catch (e) {
-                this.logService.log(result.logLevel, "Telemetry message exception: ", JSON.stringify(e));
+                this.logService.logMessage(result.logLevel, "Telemetry message exception: ", JSON.stringify(e));
             }
         });
 
         worker.on('error', (err: Error) => {
-            this.logService.log(LogLevel.error, "Telemetry worker error: ", err.toString());
+            this.logService.logger.error("Telemetry worker error: ", err.toString());
         });
 
         worker.on('exit', (code) => {
-            this.logService.log(LogLevel.error, 'Telemetry worker thread stopped');
+            this.logService.logger.error('Telemetry worker thread stopped');
         });
 
         return {

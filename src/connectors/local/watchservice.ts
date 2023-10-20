@@ -3,7 +3,7 @@ import path from 'path';
 import epoll from 'epoll';
 import { WatchValueConfig } from './watchvalueconfig.js';
 import { ValueGroup, SubValue } from '../../value.js';
-import { LoggingService, LogLevel } from '../../services/loggingservice.js';
+import { LoggingService } from '../../services/loggingservice.js';
 import { FileService } from './fileservice.js';
 import { getBasedir } from '../../folders.js';
 import { setTimeout } from "timers/promises";
@@ -53,8 +53,8 @@ export class WatchService {
             }
         }
         catch (e) {
-            that.logService.log(LogLevel.error, 'Error creating Watcher');
-            that.logService.log(LogLevel.error, e);
+            that.logService.logger.error('Error creating Watcher');
+            that.logService.logger.error(e);
         }
 
         return w;
@@ -64,23 +64,23 @@ export class WatchService {
         let that = this;
         try {
             if (file.startsWith(path.join(getBasedir(), 'plc/variables')) && file.endsWith('value')) {
-                that.logService.log(LogLevel.debug, `plc variable file ${file} detected, check if subscribed`);
+                that.logService.logger.debug(`plc variable file ${file} detected, check if subscribed`);
                 let subscriptionFile = file.substring(0, file.length - 5) + 'subscribe';
                 if (await fs.exists(subscriptionFile)) {
                     if ((await fs.readFile(subscriptionFile, 'utf8')).trim() === '0') {
-                        that.logService.log(LogLevel.debug, `plc variable ${subscriptionFile}, subscribing`);
+                        that.logService.logger.debug(`plc variable ${subscriptionFile}, subscribing`);
                         await fs.writeFile(subscriptionFile, "1", { encoding: "utf8" });
-                        that.logService.log(LogLevel.debug, `plc variable ${subscriptionFile}, subscribed`);
+                        that.logService.logger.debug(`plc variable ${subscriptionFile}, subscribed`);
                     }
-                    that.logService.log(LogLevel.debug, `plc variable subsription file ${subscriptionFile} found`);
+                    that.logService.logger.debug(`plc variable subsription file ${subscriptionFile} found`);
                 } else {
-                    that.logService.log(LogLevel.error, `plc variable subsription file ${subscriptionFile} not found, doing nothing`);
+                    that.logService.logger.error(`plc variable subsription file ${subscriptionFile} not found, doing nothing`);
                 }
             }
         }
         catch (e) {
-            that.logService.log(LogLevel.error, `error while checking PLC subscription file for variable ${file}`);
-            that.logService.log(LogLevel.error, e);
+            that.logService.logger.error(`error while checking PLC subscription file for variable ${file}`);
+            that.logService.logger.error(e);
         }
 
     }
@@ -96,8 +96,8 @@ export class WatchService {
             }
             catch (e) {
                 if (i === w.readretry - 1) {
-                    that.logService.log(LogLevel.error, `error while reading watched file ${w.file}`);
-                    that.logService.log(LogLevel.error, e);
+                    that.logService.logger.error(`error while reading watched file ${w.file}`);
+                    that.logService.logger.error(e);
                 } else {
 
                 }
@@ -116,16 +116,16 @@ export class WatchService {
             });
 
             terminationFunctions.push(() => {
-                that.logService.log(LogLevel.debug, `removing ${valueGroup.fullname} watcher`);
+                that.logService.logger.debug(`removing ${valueGroup.fullname} watcher`);
                 watcher.close();
-                that.logService.log(LogLevel.debug, `removed ${valueGroup.fullname} watcher`);
+                that.logService.logger.debug(`removed ${valueGroup.fullname} watcher`);
             });
 
             return await fs.open(w.file, 'w+');
         }
         catch (e) {
-            that.logService.log(LogLevel.error, `error while reading watched file ${w.file}`);
-            that.logService.log(LogLevel.error, e);
+            that.logService.logger.error(`error while reading watched file ${w.file}`);
+            that.logService.logger.error(e);
         }
         return null;
     }
@@ -138,9 +138,9 @@ export class WatchService {
             try {
                 fd = await fs.open(w.file, 'w+');
                 w.data = Buffer.from("          ");
-                that.logService.log(LogLevel.debug, `creating poller for ${w.file}`);
+                that.logService.logger.debug(`creating poller for ${w.file}`);
                 poller = new epoll.Epoll((_err: string, fd: number, _events: any) => {
-                    that.logService.log(LogLevel.debug, `epoll event fired for ${w.file}`);
+                    that.logService.logger.debug(`epoll event fired for ${w.file}`);
                     // Read GPIO value file. Reading also clears the interrupt.
                     let bytesRead = fs.readSync(fd, w.data, 0, 10, 0);
                     let value = w.data.toString('ascii', 0, bytesRead);
@@ -161,7 +161,7 @@ export class WatchService {
                         if (fd != null) {
                             fs.closeSync(fd);
                         }
-                        that.logService.log(LogLevel.debug, `removed ${valueGroup.fullname} epoll`);
+                        that.logService.logger.debug(`removed ${valueGroup.fullname} epoll`);
                     });
                 break;
             }
@@ -178,8 +178,8 @@ export class WatchService {
                 catch { }
 
                 if (i === w.readretry - 1) {
-                    that.logService.log(LogLevel.error, `error while reading watched epoll file ${w.file}`);
-                    that.logService.log(LogLevel.error, e);
+                    that.logService.logger.error(`error while reading watched epoll file ${w.file}`);
+                    that.logService.logger.error(e);
                 } else {
                 }
             }

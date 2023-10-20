@@ -5,14 +5,6 @@ import axios, { AxiosRequestConfig, AxiosPromise } from "axios";
 import https from "https";
 import { HttpsAgent } from "agentkeepalive";
 
-export enum LogLevel {
-    error,
-    warn,
-    info,
-    verbose,
-    debug
-}
-
 const engine = new Engine();
 const config = new TelemetryConfig(workerData);
 const httpsAgent = new HttpsAgent({
@@ -35,7 +27,7 @@ parentPort?.on("message", async (msg: any) => {
                 let success: boolean = false;
                 try {
                     if (config.server) {
-                        //parentPort?.postMessage({ cmd: TelemetryCommand.LOG, logLevel: LogLevel.error, message: `posting telemetry ${JSON.stringify(data.data)}` });
+                        //parentPort?.postMessage({ cmd: TelemetryCommand.LOG, logLevel: 'error', message: `posting telemetry ${JSON.stringify(data.data)}` });
                         let url: string = `${msg.accesstoken}/telemetry`;
                         try {
                             const { status } = await api.post(url, msg.data);
@@ -47,18 +39,18 @@ parentPort?.on("message", async (msg: any) => {
                     }
                 }
                 catch { }
-                //parentPort?.postMessage({ cmd: TelemetryCommand.LOG, logLevel: LogLevel.error, message: `telemetry send ${success ? 'successful' : 'unsuccessful'}` });
+                //parentPort?.postMessage({ cmd: TelemetryCommand.LOG, logLevel: 'error', message: `telemetry send ${success ? 'successful' : 'unsuccessful'}` });
                 break;
             case TelemetryCommand.RPC: //rpc reply
                 try {
                     let postResult = await api.post(`${msg.data.accesstoken}/rpc/${msg.data.id}`, JSON.stringify(msg.data.response));
                 }
                 catch { }
-                //parentPort?.postMessage({ cmd: TelemetryCommand.LOG, logLevel: LogLevel.info, message: `post result of data ${JSON.stringify(msg.data.response)}: ${JSON.stringify(postResult.status)}` });
+                //parentPort?.postMessage({ cmd: TelemetryCommand.LOG, logLevel: 'info', message: `post result of data ${JSON.stringify(msg.data.response)}: ${JSON.stringify(postResult.status)}` });
                 break;
         }
     } catch (error) {
-        parentPort?.postMessage({ cmd: TelemetryCommand.LOG, logLevel: LogLevel.error, message: `message receive error ${JSON.stringify(error)}` });
+        parentPort?.postMessage({ cmd: TelemetryCommand.LOG, logLevel: 'error', message: `message receive error ${JSON.stringify(error)}` });
     }
 });
 

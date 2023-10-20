@@ -2,7 +2,7 @@ import { injectable, inject } from "inversify";
 import { provide } from 'inversify-binding-decorators';
 import { ConnectorConfig, ValueGroup, SubValue, Value } from "../../value.js";
 import { ConfigService } from "../../services/configservice.js";
-import { LoggingService, LogLevel } from "../../services/loggingservice.js";
+import { LoggingService } from "../../services/loggingservice.js";
 import { AuthService } from "../../services/authservice.js";
 import { IConnectorFactory, IConnector } from "../connector.js";
 import { NAMED_OBJECTS } from "../../inversify.config.js";
@@ -88,13 +88,13 @@ class MqttRec {
         if (this.recordReady && this.connectionReady) {
             try {
                 this.client.publish(this.recordName + '/' + subName, JSON.stringify(value));
-                this.logService.log(LogLevel.debug, `Record set ${this.recordName}/${subName}, ${value}`);
+                this.logService.logger.debug(`Record set ${this.recordName}/${subName}, ${value}`);
             } catch (e) {
-                this.logService.log(LogLevel.error, `ERROR setting ${this.recordName} with subvalue ${subName} to value '${value}': ${JSON.stringify(e, null, 2)}`);
+                this.logService.logger.error(`ERROR setting ${this.recordName} with subvalue ${subName} to value '${value}': ${JSON.stringify(e, null, 2)}`);
             }
         } else {
             this.value[subName] = value;
-            this.logService.log(LogLevel.debug, `cannot set ${this.recordName} with subvalue ${subName} to value '${value}', buffering`);
+            this.logService.logger.debug(`cannot set ${this.recordName} with subvalue ${subName} to value '${value}', buffering`);
         }
         return true;
     }
@@ -137,8 +137,8 @@ export class MqttConnector implements IConnector {
 
         that.client.on('connect', function() {
             that.connected = true;
-            that.logService.log(
-                LogLevel.info,
+            that.logService.logger.info(
+
                 `Connector '${that.name}': ${chalk.green("connected")}`
             );
             for (let recordname in that.records) {
@@ -149,8 +149,8 @@ export class MqttConnector implements IConnector {
         });
 
         that.client.on("error", function(msg: string, event: string, topic: string) {
-            that.logService.log(
-                LogLevel.error,
+            that.logService.logger.error(
+
                 `Connector '${that.name} ERROR': ${chalk.red(msg)}`
             );
         });
@@ -168,8 +168,7 @@ export class MqttConnector implements IConnector {
                             let value = JSON.parse(packet.payload.toString());
                             rec.setValue(value, that.name);
                             handled = true;
-                            LogLevel.debug,
-                                `Target value of ${name} (${subValue}) changed to ${value}`
+                            that.logService.logger.debug(`Target value of ${name} (${subValue}) changed to ${value}`);
                         }
                     }
                 }
@@ -189,10 +188,7 @@ export class MqttConnector implements IConnector {
     getRecord(sub: ConnectorConfig, valueGroup: ValueGroup): MqttRec {
         let that = this;
         if (!that.records[valueGroup.fullNameWithNodeId]) {
-            that.logService.log(
-                LogLevel.debug,
-                `Creating Record '${valueGroup.fullNameWithNodeId}'`
-            );
+            that.logService.logger.debug(`Creating Record '${valueGroup.fullNameWithNodeId}'`);
             that.records[valueGroup.fullNameWithNodeId] = new MqttRec(
                 valueGroup,
                 sub,
@@ -230,8 +226,8 @@ export class MqttConnector implements IConnector {
                 let topic = `${rec.recordName}/${subValue}`;
                 that.client?.subscribe(topic, async function(err: any, topic: any) {
                     if (err) {
-                        that.logService.log(LogLevel.error, `Cannot subscribe to topic ${topic}`);
-                        that.logService.log(LogLevel.error, JSON.stringify(err));
+                        that.logService.logger.error(`Cannot subscribe to topic ${topic}`);
+                        that.logService.logger.error(JSON.stringify(err));
                     }
                 });
             }

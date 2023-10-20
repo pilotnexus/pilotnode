@@ -10,7 +10,7 @@ import { getMainDefinition } from '@apollo/client/utilities/index.js';
 
 import jwt_decode from 'jwt-decode';
 import { SbcService } from "./sbcservice.js";
-import { LoggingService, LogLevel } from "./loggingservice.js";
+import { LoggingService } from "./loggingservice.js";
 import { RpcService } from "./rpcservice.js";
 import { GraphQLWsLink } from '@apollo/client/link/subscriptions/index.js';
 import { createClient } from "graphql-ws";
@@ -46,7 +46,7 @@ export class ApiService {
     async init(unauthorized: Boolean): Promise<ApolloClientType<NormalizedCacheObject> | null> {
         let that = this;
         if (that.client === null && !that.auth.disabled) { //TODO: for now don't connect at all when unauthorized (there is not much we can read as an unauthorized user)
-            that.log.log(LogLevel.info, `Connecting to ${that.configService.config.pilotapiurl} in unauthorized mode`);
+            that.log.logger.info(`Connecting to ${that.configService.config.pilotapiurl} in unauthorized mode`);
             try {
                 const cache = new InMemoryCache();
                 let headers = unauthorized ? {} : { "Authorization": await that.auth.token() };
@@ -86,8 +86,8 @@ export class ApiService {
                 }
             }
             catch (e: any) {
-                that.log.log(LogLevel.error, "Cannot connect to API");
-                that.log.log(LogLevel.error, e);
+                that.log.logger.error("Cannot connect to API");
+                that.log.logger.error(e);
             }
         }
 
@@ -186,7 +186,7 @@ export class ApiService {
                 return result?.data?.update_pilot_activity?.affected_rows === 1 ? true : false;
             }
             catch (e) {
-                this.log.log(LogLevel.error, e);
+                this.log.logger.error(e);
             }
         }
         return false;

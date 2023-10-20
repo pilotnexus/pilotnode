@@ -3,7 +3,7 @@ import path from "path";
 import fs from "fs";
 import { ConnectorConfig, ValueGroup, SubValue, DataType } from "../../value.js";
 import { ConfigService } from "../../services/configservice.js";
-import { LoggingService, LogLevel } from "../../services/loggingservice.js";
+import { LoggingService } from "../../services/loggingservice.js";
 import { ValueService } from "../../services/valueservice.js";
 import { IConnectorFactory, IConnector } from "../connector.js";
 import {
@@ -194,15 +194,15 @@ export class ServerConnector implements IConnector {
         for (let appspec of this.serverconfig.apps) {
             let appPath = path.resolve(appspec.path);
             if (fs.existsSync(appPath)) {
-                that.log.log(LogLevel.info, `Serving app (${appPath}) on ${appspec.endpoint}`);
+                that.log.logger.info(`Serving app (${appPath}) on ${appspec.endpoint}`);
                 app.use(appspec.endpoint, express.static(appPath));
             } else {
-                that.log.log(LogLevel.error, `Cannot serve app, directory ${appPath} not found.`);
+                that.log.logger.error(`Cannot serve app, directory ${appPath} not found.`);
             }
         };
 
         httpServer.listen({ port: that.serverconfig.port }, () => {
-            that.log.log(LogLevel.info, `GraphQL URL: ${that.serverconfig.url}:${that.serverconfig.port}${that.serverconfig.endpoint}`);
+            that.log.logger.info(`GraphQL URL: ${that.serverconfig.url}:${that.serverconfig.port}${that.serverconfig.endpoint}`);
         });
 
         if (that.serverconfig.enableNodeRed) {

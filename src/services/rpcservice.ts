@@ -3,7 +3,7 @@ import { ConnectorConfig, ValueGroup, SubValue, ValueProperties, IConnectorBaseC
 import { ConfigService } from "./configservice.js";
 import { ConnectorService } from "./connectorservice.js";
 import { validate, validateOrReject, ValidationError } from 'class-validator';
-import { LoggingService, LogLevel } from "./loggingservice.js";
+import { LoggingService } from "./loggingservice.js";
 
 
 export interface RpcParam {
@@ -92,7 +92,7 @@ export class RpcService {
                         setDefaultParam = true;
                     } else {
                         //error, required parameter not found
-                        this.loggingService.log(LogLevel.error, `RPC call '${method}' is missing required parameter '${rpc.params[param].name}'`);
+                        this.loggingService.logger.error(`RPC call '${method}' is missing required parameter '${rpc.params[param].name}'`);
                         return undefined;
                     }
                 }
@@ -113,7 +113,7 @@ export class RpcService {
                 return await this.rpcs[method].fn(paramsObj);
             }
             catch (e) {
-                this.loggingService.log(LogLevel.error, `Error executong RPC call ${method}: ${JSON.stringify(e)}`);
+                this.loggingService.logger.error(`Error executong RPC call ${method}: ${JSON.stringify(e)}`);
             }
         }
 

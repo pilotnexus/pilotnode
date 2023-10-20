@@ -1,25 +1,15 @@
 
 
-import { injectable, inject } from "inversify";
-import path from "path";
-import fs from "fs";
-import { ConnectorConfig, ValueGroup, SubValue, DataType } from "../../value.js";
+import { ValueGroup, DataType } from "../../value.js";
 import { ConfigService } from "../../services/configservice.js";
-import { LoggingService, LogLevel } from "../../services/loggingservice.js";
 import { ValueService } from "../../services/valueservice.js";
 import { RpcService } from "../../services/rpcservice.js";
 
 import {
-    GraphQLBoolean,
     GraphQLFloat,
-    GraphQLInt,
     GraphQLObjectType,
     GraphQLSchema,
     GraphQLString,
-    execute,
-    subscribe,
-    GraphQLScalarType,
-    GraphQLInputObjectType,
 } from "graphql";
 
 

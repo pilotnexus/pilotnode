@@ -5,7 +5,7 @@ import { ConnectorConfig, ValueGroup, SubValue } from "../../value.js";
 import { ConfigService } from "../../services/configservice.js";
 import { DeepstreamValueConfig } from "./deepstreamvalueconfig.js";
 import { SshRpcService } from "./sshrpcservice.js";
-import { LoggingService, LogLevel } from "../../services/loggingservice.js";
+import { LoggingService } from "../../services/loggingservice.js";
 import { AuthService } from "../../services/authservice.js";
 import { IConnectorFactory, IConnector } from "../connector.js";
 import { CONNECTION_STATE } from "@deepstream/client/dist/src/constants.js";
@@ -51,19 +51,14 @@ export class DeepstreamConnector implements IConnector {
         }
 
         that.client.on("error", function(msg: string, event: string, topic: string) {
-            that.logService.log(
-                LogLevel.error,
-                `Connector '${that.name} ERROR': ${chalk.red(msg)}`
-            );
+            that.logService.logger.error(`Connector '${that.name} ERROR': ${chalk.red(msg)}`);
         });
 
         let changeConnectionState = (name: string, connectionState: CONNECTION_STATE) => {
             switch (connectionState) {
                 case CONNECTION_STATE.OPEN:
                     that.connected = true;
-                    that.logService.log(
-                        LogLevel.info,
-                        `Connector '${name}': ${chalk.green("connected")}`
+                    that.logService.logger.info(`Connector '${name}': ${chalk.green("connected")}`
                     );
 
                     // provide rpc calls
@@ -82,17 +77,11 @@ export class DeepstreamConnector implements IConnector {
                     break;
                 case CONNECTION_STATE.ERROR:
                     this.connected = false;
-                    that.logService.log(
-                        LogLevel.error,
-                        `Connector '${name}': ${chalk.red(connectionState)}`
-                    );
+                    that.logService.logger.error(`Connector '${name}': ${chalk.red(connectionState)}`);
                     break;
                 default:
                     this.connected = false;
-                    that.logService.log(
-                        LogLevel.warn,
-                        `Connector '${name}': ${chalk.yellow(connectionState)}`
-                    );
+                    that.logService.logger.warn(`Connector '${name}': ${chalk.yellow(connectionState)}`);
                     break;
             }
         };
@@ -106,7 +95,7 @@ export class DeepstreamConnector implements IConnector {
             if (success) {
                 //that.provideRpcs(that.config.nodeid, that.client, { osinfo: that.sbcservice.staticOsInfoObject} );
             } else {
-                that.logService.log(LogLevel.error, "Connection to Deepstream Server failed");
+                that.logService.logger.error("Connection to Deepstream Server failed");
             }
         });
 
@@ -120,10 +109,7 @@ export class DeepstreamConnector implements IConnector {
     getRecord(sub: ConnectorConfig, valueGroup: ValueGroup): Rec {
         let that = this;
         if (!that.records[valueGroup.fullNameWithNodeId]) {
-            that.logService.log(
-                LogLevel.debug,
-                `Creating Record '${valueGroup.fullNameWithNodeId}'`
-            );
+            that.logService.logger.debug(`Creating Record '${valueGroup.fullNameWithNodeId}'`);
             that.records[valueGroup.fullNameWithNodeId] = new Rec(
                 valueGroup,
                 sub,
@@ -162,10 +148,7 @@ export class DeepstreamConnector implements IConnector {
                         subValue,
                         async value => {
                             await valueGroup.values[subValue].setValue(value, that.name);
-                            that.logService.log(
-                                LogLevel.debug,
-                                `Target value of ${record.name} (${subValue}) changed to ${value}`
-                            );
+                            that.logService.logger.debug(`Target value of ${record.name} (${subValue}) changed to ${value}`);
                         },
                         false
                     );
