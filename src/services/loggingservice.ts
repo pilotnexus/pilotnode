@@ -2,7 +2,7 @@ import { injectable, inject } from "inversify";
 import pino from 'pino';
 import rfs from 'rotating-file-stream';
 import fs from 'fs';
-import pinoms from 'pino-multi-stream';
+import pretty from 'pino-pretty';
 import * as path from 'path';
 import { URL } from 'url';
 
@@ -65,21 +65,9 @@ function consoleError(error: unknown, message: string) {
 
 const canLogToFile = canSetUpLogFile();
 
-const prettyStream = pinoms.prettyStream(
-    {
-        prettyPrint:
-        {
-            colorize: true,
-            translateTime: "SYS:standard",
-            ignore: "hostname,pid" // add 'time' to remove timestamp
-        },
-    }
-);
 // Create a set of streams: one for the console (pretty-printed) and another for the file (if possible)
 const streams: Array<any> = [
-    {
-        stream: prettyStream,
-    } // Pretty print to the console
+    { stream: pretty() } // Pretty print to the console
 ];
 
 if (canLogToFile) {
@@ -94,12 +82,10 @@ if (canLogToFile) {
     console.error('Logging to file setup failed. Console logging still available.');
 }
 
-// const logger = pino({
-//     name: 'pilotnode',
-//     level: 'debug', // must be the lowest level of all streams
-// }, pino.multistream(streams))
-
-var logger = pinoms(pinoms.multistream(streams))
+const logger = pino({
+    name: 'pilotnode',
+    level: 'debug', // must be the lowest level of all streams
+}, pino.multistream(streams))
 
 // Now you can use logger.info(), logger.error(), etc.
 @injectable()
