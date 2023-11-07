@@ -15,6 +15,7 @@ import service from 'os-service'
 import { checkServerIdentity } from "tls";
 import { NtpTimeSync } from "ntp-time-sync";
 import * as path from 'path';
+import SegfaultHandler from 'segfault-handler';
 
 import {
     getBasedir,
@@ -30,10 +31,18 @@ import {
 //import { BleService } from './services/bleservice';
 // import { UsbService } from './services/usbservice';
 
+let logService = globalContainer.get(LoggingService);
+
+SegfaultHandler.registerHandler("/var/log/pilotnode/crash.log", function(signal, address, stack) {
+    try {
+        const indentedStack = stack.map(line => `    ${line}`).join('\n');
+
+        logService.logger.fatal(`App Crash, Signal: ${signal}, Address: ${address}\nStack Trace:\n${indentedStack}`);
+    } catch { }
+})
+
 process.on('uncaughtException', function(exception) {
-    console.log(exception); // to see your exception details in the console
-    // if you are on production, maybe you can send the exception details to your
-    // email as well ?
+    logService.logger.error(`Uncaught Exception: ${exception.toString()}`);
 });
 
 let terminate: Function | null = null;
@@ -125,7 +134,7 @@ async function config_init(options: any): Promise<ConfigService> {
 async function startup(options: any): Promise<Function> {
 
     // handle parameters that need the configuration
-    let logService = globalContainer.get(LoggingService);
+    //let logService = globalContainer.get(LoggingService);
     if (options.debug) {
         logService.logger.info('running in DEBUG logging mode');
         globalContainer.get(LoggingService).logger.level = 'debug';
