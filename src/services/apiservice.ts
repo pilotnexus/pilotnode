@@ -185,8 +185,8 @@ export class ApiService {
                 let result = await this.client?.mutate({ mutation: UPDATE_ACTIVITY, variables: { id, sent, response } });
                 return result?.data?.update_pilot_activity?.affected_rows === 1 ? true : false;
             }
-            catch (e) {
-                this.log.logger.error(e);
+            catch (e: any) {
+                this.log.logger.error(e.toString());
             }
         }
         return false;

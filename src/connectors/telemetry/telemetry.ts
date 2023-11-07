@@ -89,7 +89,7 @@ export class TelemetryConnector implements IConnector {
         });
 
         worker.on('error', (err: Error) => {
-            this.logService.logger.error("Telemetry worker error: ", err.toString());
+            this.logService.logger.error(`Telemetry worker error: ${err.toString()}`);
         });
 
         worker.on('exit', (code) => {

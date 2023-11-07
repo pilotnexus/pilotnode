@@ -1,44 +1,40 @@
 #!/bin/bash
 
-# Check if curl is installed
-command -v curl >/dev/null 2>&1 || { echo >&2 "curl is required but it's not installed. Installing now..."; sudo apt-get install -y curl; }
+set -e
+set -o pipefail
+trap 'echo "An error occurred. Exiting..."; exit 1;' ERR
 
-# Check if n is already installed
-if command -v n >/dev/null 2>&1; then
-    echo "n is already installed."
-else
-    # Make cache folder (if missing) and take ownership
-    sudo mkdir -p /usr/local/n
-    sudo chown -R $(whoami) /usr/local/n
+echo "Checking dependencies..."
+check_dependency() {
+    command -v $1 >/dev/null 2>&1 || {
+        echo >&2 "$1 is required but it's not installed. Installing now...";
+        sudo apt-get install -y $1;
+    }
+}
 
-    # Make sure the required folders exist (safe to execute even if they already exist)
+check_dependency curl
+
+echo "Checking and installing n..."
+command -v n >/dev/null 2>&1 || {
+    sudo mkdir -p /usr/local/n && sudo chown -R $(whoami) /usr/local/n
     sudo mkdir -p /usr/local/bin /usr/local/lib /usr/local/include /usr/local/share
-
-    # Take ownership of Node.js install destination folders
     sudo chown -R $(whoami) /usr/local/bin /usr/local/lib /usr/local/include /usr/local/share
+    curl -L https://raw.githubusercontent.com/tj/n/master/bin/n -o n && bash n 18.12.0
+}
 
-    # Download and install n
-    curl -L https://raw.githubusercontent.com/tj/n/master/bin/n -o n
-fi
-
-bash n 18.12.0
-
-# Check if pilotnode is already installed
+echo "Updating or installing pilotnode..."
 if npm list -g --depth=0 | grep pilotnode >/dev/null 2>&1; then
-    echo "pilotnode is already installed."
+    echo "Updating pilotnode..."
+    npm update -g pilotnode
 else
+    echo "Installing pilotnode..."
     npm install -g pilotnode
 fi
 
-# Create pilot directory
-if [ ! -d "/etc/pilot" ]; then
-    sudo mkdir /etc/pilot
-fi
-
-# Check if pilotnode.yml already exists
-if [ ! -f "/etc/pilot/pilotnode.yml" ]; then
-    # Create a minimal config in /etc/pilot/pilotnode.yml
-    cat <<EOL | sudo tee /etc/pilot/pilotnode.yml
+echo "Creating directories and files..."
+sudo mkdir -p /etc/pilot
+if [[ ! -f "/etc/pilot/pilotnode.yml" ]]; then
+    cat <<EOL | sudo tee /etc/pilot/pilotnode.yml >/dev/null
 connectors:
   - name: server
     type: server
@@ -57,4 +53,3 @@ else
 fi
 
 echo "Installation completed successfully!"
-

@@ -1,9 +1,9 @@
 import * as path from 'path';
-import service from 'os-service'
+import { add, remove } from 'os-service'
 import fs from "fs-extra";
-import { ConfigService } from './services/configservice.js';
 import { getBasedir } from './folders.js';
-import { warn } from 'console';
+
+import { fileURLToPath } from 'url';
 
 const SERVICE_NAME = 'pilotnode'
 
@@ -39,45 +39,50 @@ export class Helper {
         return typeof e === 'object' ? Object.keys(e).map(key => e[key]) : [];
     }
 
-    static async addService() {
-        var exitCode = 0;
-        //add 
-        try {
-            let error = service.add(SERVICE_NAME, { programArgs: ["run"] });
-            if (error) {
-                console.error(error);
-                exitCode = 1;
-            } else {
-                console.log('PilotNode service added.');
-                console.log('run \'sudo service pilotnode start\' to start service');
+    static async addService(): Promise<number> {
+        return new Promise((resolve) => {
+            try {
+                var options = { programArgs: ["run"] };
+                add(SERVICE_NAME, options, (error: any) => {
+                    if (error) {
+                        console.error("Error installing service:");
+                        console.error(error.toString());
+                        resolve(1);
+                    } else {
+                        console.log('PilotNode service added.');
+                        console.log('run \'sudo service pilotnode start\' to start service');
+                        resolve(0);
+                    }
+                });
             }
-        }
-        catch (e) {
-            console.log(e);
-            console.error("Error installing service. Do you have root priviliges?");
-            exitCode = 1;
-        }
-
-        return exitCode;
+            catch (e) {
+                console.log(e);
+                console.error("Error installing service. Do you have root priviliges?");
+                resolve(1);
+            }
+        });
     }
 
-    static async removeService() {
-        var exitCode = 0;
-        try {
-            let error = service.remove(SERVICE_NAME);
-            // if (error) {
-            //     console.error(error);
-            //     exitCode = 1;
-            // } else {
-            //     console.log('PilotNode service removed.');
-            // }
-        }
-        catch (e) {
-            console.log(e);
-            console.error("Error removing service. Do you have root priviliges?");
-            exitCode = 1;
-        }
-        return exitCode;
+    static async removeService(): Promise<number> {
+        return new Promise((resolve) => {
+            try {
+                remove(SERVICE_NAME, (error: any) => {
+                    if (error) {
+                        console.error("Error removing service:");
+                        console.error(error.toString());
+                        resolve(1);
+                    } else {
+                        console.log('PilotNode service removed.');
+                        resolve(0);
+                    }
+                });
+            }
+            catch (e) {
+                console.log(e);
+                console.error("Error removing service. Do you have root priviliges?");
+                resolve(1);
+            }
+        });
     }
 
     static async checkfs(paths: string[]): Promise<boolean> {
@@ -141,6 +146,29 @@ export class Helper {
             }
         }
         return true;
+    }
+
+    static async getPackageVersion() {
+        const __filename = fileURLToPath(import.meta.url);
+        const __dirname = path.dirname(__filename);
+
+        const pathsToCheck = [
+            path.resolve(__dirname, '../package.json'),
+            path.resolve(__dirname, '../../../package.json'),
+        ];
+
+        for (const pathToCheck of pathsToCheck) {
+            try {
+                const data = await fs.readFile(pathToCheck, 'utf8');
+                const packageJson = JSON.parse(data);
+                return packageJson.version;
+            } catch (error) {
+                // Handle error if necessary, e.g. log it or re-throw it
+                console.error(`Failed to load ${pathToCheck}:`, error);
+            }
+        }
+
+        throw new Error('package.json not found');
     }
 
 }

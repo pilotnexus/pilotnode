@@ -52,9 +52,9 @@ export class WatchService {
                 }, "__local.WatchService");
             }
         }
-        catch (e) {
+        catch (e: any) {
             that.logService.logger.error('Error creating Watcher');
-            that.logService.logger.error(e);
+            that.logService.logger.error(e.toString());
         }
 
         return w;
@@ -78,9 +78,9 @@ export class WatchService {
                 }
             }
         }
-        catch (e) {
+        catch (e: any) {
             that.logService.logger.error(`error while checking PLC subscription file for variable ${file}`);
-            that.logService.logger.error(e);
+            that.logService.logger.error(e.toString());
         }
 
     }
@@ -94,10 +94,10 @@ export class WatchService {
                 valueGroup.values[SubValue.actualValue].setValue(value, "__local.WatchService");
                 return;
             }
-            catch (e) {
+            catch (e: any) {
                 if (i === w.readretry - 1) {
                     that.logService.logger.error(`error while reading watched file ${w.file}`);
-                    that.logService.logger.error(e);
+                    that.logService.logger.error(e.toString());
                 } else {
 
                 }
@@ -123,9 +123,9 @@ export class WatchService {
 
             return await fs.open(w.file, 'w+');
         }
-        catch (e) {
+        catch (e: any) {
             that.logService.logger.error(`error while reading watched file ${w.file}`);
-            that.logService.logger.error(e);
+            that.logService.logger.error(e.toString());
         }
         return null;
     }
@@ -165,7 +165,7 @@ export class WatchService {
                     });
                 break;
             }
-            catch (e) {
+            catch (e: any) {
                 try {
                     poller.remove(fd);
                 }
@@ -179,7 +179,7 @@ export class WatchService {
 
                 if (i === w.readretry - 1) {
                     that.logService.logger.error(`error while reading watched epoll file ${w.file}`);
-                    that.logService.logger.error(e);
+                    that.logService.logger.error(e.toString());
                 } else {
                 }
             }

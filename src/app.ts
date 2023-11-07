@@ -15,6 +15,7 @@ import service from 'os-service'
 import { checkServerIdentity } from "tls";
 import { NtpTimeSync } from "ntp-time-sync";
 import * as path from 'path';
+
 import {
     getBasedir,
     getCfgfile,
@@ -97,10 +98,8 @@ program
         process.exit(await Helper.removeService());
     });
 
-program.version('0.5.10'); //TODO, unify with package.json?
+program.version(await Helper.getPackageVersion());
 program.parse(process.argv);
-
-
 
 async function config_init(options: any): Promise<ConfigService> {
     if (options.basedir) {
@@ -180,13 +179,13 @@ async function main(configService: ConfigService, logService: LoggingService): P
     try {
         const timeSync = NtpTimeSync.getInstance();
         const result = await timeSync.getTime();
-        logService.logger.info("Current System Time", new Date());
-        logService.logger.info("Real Time", result.now);
-        logService.logger.info("offset in milliseconds", result.offset);
+        logService.logger.info(`Current System Time ${new Date()}`);
+        logService.logger.info(`Real Time ${result.now}`);
+        logService.logger.info(`offset in milliseconds ${result.offset}`);
     }
-    catch (e) {
+    catch (e: any) {
         logService.logger.error("Cannot get time from NTP server");
-        logService.logger.error(e);
+        logService.logger.error(e.toString());
     }
 
     // create connector service
@@ -200,8 +199,8 @@ async function main(configService: ConfigService, logService: LoggingService): P
     try {
         await valueService.createValues();
     }
-    catch (e) {
-        logService.logger.error(e);
+    catch (e: any) {
+        logService.logger.error(e.toString());
         process.exit(1);
     }
 
@@ -211,8 +210,8 @@ async function main(configService: ConfigService, logService: LoggingService): P
     try {
         await valueService.bind();
     }
-    catch (e) {
-        logService.logger.error(e);
+    catch (e: any) {
+        logService.logger.error(e.toString());
         process.exit(1);
     }
 

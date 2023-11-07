@@ -11,7 +11,6 @@ import { RpcService } from "../../services/rpcservice.js";
 
 import { resolve } from 'path';
 import { Worker } from 'worker_threads';
-import { Fact } from "json-rules-engine";
 
 @injectable()
 export class RuleEngineFactory implements IConnectorFactory {
@@ -60,7 +59,7 @@ export class RuleEngineConnector implements IConnector {
 
         worker.on('message', (result: any) => {
             if (result.error) {
-                this.log.logger.error('Rules Engine Error', result.error);
+                this.log.logger.error(`Rules Engine Error ${result.error}`);
             } else if (result.events) {
                 for (let event of result.events) {
                     if (event.params.value !== undefined && !isNaN(event.params.index)) {
@@ -70,7 +69,7 @@ export class RuleEngineConnector implements IConnector {
                     if (event.params.message) {
                         // write message to server
                         this.api.insertMessage(event.params.message).catch(reason => {
-                            this.log.logger.error('Could not send notification message to Server', reason);
+                            this.log.logger.error(`Could not send notification message to Server ${reason}`);
                         });
                     }
 
@@ -81,10 +80,10 @@ export class RuleEngineConnector implements IConnector {
         });
 
         worker.on('error', (err: Error) => {
-            this.log.logger.error("Rule-Engine worker error: ", err);
+            this.log.logger.error(`Rule-Engine worker error: ${err.toString()}`);
         });
 
-        worker.on('exit', (code) => {
+        worker.on('exit', (_code) => {
             this.log.logger.error('worker thread stopped');
         });
 
@@ -95,7 +94,7 @@ export class RuleEngineConnector implements IConnector {
         }
     }
 
-    async valuesCreated(values: { [name: string]: ValueGroup; }): Promise<void> {
+    async valuesCreated(_values: { [name: string]: ValueGroup; }): Promise<void> {
     }
 
     async valuesBound(values: { [name: string]: ValueGroup; }): Promise<void> {
@@ -118,7 +117,7 @@ export class RuleEngineConnector implements IConnector {
             if (value.fullname in facts) {
                 //we need to add listener for all fact subvalues
                 for (const subValue in facts[value.fullname].values) {
-                    value.values[subValue].changed(async (newValue: any, oldValue: any) => {
+                    value.values[subValue].changed(async (newValue: any, _oldValue: any) => {
                         try {
                             //@ts-ignore
                             facts[value.fullname].values[subValue] = newValue;
@@ -140,7 +139,7 @@ export class RuleEngineConnector implements IConnector {
 
     }
 
-    setValue(config: ConnectorConfig, valueGroup: ValueGroup, subValue: SubValue, value: any): void {
+    setValue(_config: ConnectorConfig, _valueGroup: ValueGroup, _subValue: SubValue, _value: any): void {
     }
 
 }

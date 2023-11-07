@@ -254,8 +254,9 @@ export class ConfigService {
             }
 
             return await this.fileLoader(identityfile);
-        } catch (e) {
-            log.logger.error(`ERROR: Could not load config file ${getCfgfile()}`, e);
+        } catch (e: any) {
+            log.logger.error(`ERROR: Could not load config file ${getCfgfile()}`);
+            log.logger.error(e.toString());
             //TODO - fallback to server config?
             throw e;
         }

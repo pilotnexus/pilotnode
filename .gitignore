@@ -1,7 +1,7 @@
 *.js.map
 /node_modules/
 /exec/
-*.js
+/bin/
 /src/node_modules/
 /build/
 # dotenv environment variables file
